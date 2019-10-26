@@ -7,16 +7,22 @@ class InputProduct extends Component {
       name: "",
       idcategory: this.props.categories[0].id,
     }
+    this.textInput = React.createRef();
   }
 
   handleChange = (e) => {
     const [index, value] = [e.target.name, e.target.value]
-    this.setState(() => ({
-      [index]: value
-    }));
-    if(index == 'idcategory'){
-      this.props.updateIdcategory(value);
+    if(index === 'idcategory'){
+      this.setState(() => ({
+        [index]: parseInt(value)
+      }));
+      this.props.updateIdcategory(parseInt(value));
+    } else {
+      this.setState(() => ({
+        [index]: value
+      }));
     }
+    this.textInput.current.focus();
   }
 
   handleKey = (e) => {
@@ -25,12 +31,15 @@ class InputProduct extends Component {
     }
   }
 
-  handleSubmit = () => {        //Ne pas envoyer si vide
-    this.props.callbackList(this.state)
+  handleSubmit = () => {
+    if(this.state.name) {
+      this.props.addToList(this.state)
+      this.props.updateIdcategory(this.props.idcategory);
+    }
     this.setState({
       name: "",
-    })
-    this.props.updateIdcategory(this.props.idcategory);
+    });
+    this.textInput.current.focus();
   }
 
 
@@ -40,18 +49,19 @@ class InputProduct extends Component {
       <div className="row">
         <div className="col col-5 col-sm-5">
           <input id="add-product"
-            className="form-control"
+            className="form-control form-control-sm"
             name="name" 
             type="text" 
             value={this.state.name} 
             onChange={this.handleChange} 
             onKeyDown={this.handleKey} 
             placeholder="add item" 
+            ref={this.textInput} 
           />
         </div>
         <div className="col col-5 col-sm-5">
           <select id="add-categories"
-            className="form-control"
+            className="form-control form-control-sm"
             name="idcategory" 
             value={this.props.idcategory || this.state.idcategory} 
             onChange={this.handleChange}>
@@ -60,7 +70,7 @@ class InputProduct extends Component {
         </div>
         <div className="col col-sm">
           <input 
-            className="btn btn-info"
+            className="btn btn-sm btn-info"
             type="submit" 
             name="submit" 
             value="Add" 

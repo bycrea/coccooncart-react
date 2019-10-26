@@ -7,9 +7,9 @@ class Nav extends Component {
     return (
       <nav id="top">
         <ul className="links">
-          <Link to="/"><li>home</li></Link>
+          <Link to="/"><li>Home</li></Link>
           <Link to="/cart"><li>Cart</li></Link>
-          <Link to="/"><li>About</li></Link>
+          <Link to="/wallet"><li>Wallet</li></Link>
         </ul>
       </nav>  
     )
