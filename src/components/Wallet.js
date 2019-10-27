@@ -1,6 +1,4 @@
 import React, { Component } from 'react';
-import InputProduct from './InputProduct';
-import trash from '../images/trash.png'
 
 class Cart extends Component {
   constructor(props) {

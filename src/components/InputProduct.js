@@ -6,6 +6,16 @@ class InputProduct extends Component {
     this.state = {
       name: "",
       idcategory: this.props.categories[0].id,
+      // list: [
+      //   {name: 'test', idcategory: 12, checked: false},
+      //   {name: 'carotte', idcategory: 1, checked: false},
+      //   {name: 'des choses', idcategory: 9, checked: true},
+      //   {name: 'des choses avec de text', idcategory: 2, checked: false},
+      //   {name: 'test', idcategory: 2, checked: false},
+      //   {name: 'pq', idcategory: 7, checked: false},
+      //   {name: 'des choses encore', idcategory: 8, checked: true},
+      //   {name: 'des choses', idcategory: 10, checked: false},
+      // ],
     }
     this.textInput = React.createRef();
   }

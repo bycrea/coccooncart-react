@@ -1,70 +1,115 @@
 import React, { Component } from 'react';
-import InputProduct from './InputProduct';
 import trash from '../images/trash.png'
 
 class Cart extends Component {
   constructor(props) {
     super(props)
     this.state = {
+      listId: null,
       list: [],
-      products: [],
       categories: [],
-      idcategory: "",
+      product: "",
+      selectedCatgId: null,
+      selectedCatgName: "",
       inTrash: [],
       loading: true,
       error: false
     }
+    //this.textInput = React.createRef();
   }
 
   componentDidMount() {
-    fetch('http://coccooncart.com/api/products_list')
-    //fetch('http://api.bycrea.me/api/products_list')
+    fetch('http://coccooncart.com/api/getlist')
       .then(res => res.json())
       .then((result) => {
+        console.log(result);
+        if(result.error === false) {
           this.setState({
-            // list: result.list || [],
-            list: [
-              {name: 'test', idcategory: 2, checked: false},
-              {name: 'carotte', idcategory: 1, checked: false},
-              {name: 'des choses', idcategory: 8, checked: true},
-              {name: 'des choses avec bcp de text', idcategory: 2, checked: false},
-            ],
-            products: result.products,
+            listId: result.listId,
+            list: result.list || [],
             categories: result.categories,
-            idcategory: parseInt(result.categories[0].id),
+            selectedCatgId: parseInt(result.categories[0].id),
+            selectedCatgName: result.categories[0].name,
             loading: false,
-          })
+          });
           console.log('success')
+        } else {
+          console.log(result.error)
+          this.setState({
+            error: true,
+            loading: false,
+          });
+        }
       },
       (error) => {
         this.setState({
-          loading: false,
-          error: true
-        })
+          error: true,
+          loading: false
+        });
         console.log(error)
       }
     )
   }
 
-  addToList = (product) => {
-    const addProduct = {name: product.name, idcategory: this.state.idcategory}
-    this.setState((prevState) => ({
-      list: [addProduct].concat(prevState.list),
+  updateList(newList = this.state.list) {
+    fetch('http://coccooncart.com/api/updatelist', {
+      method: 'POST',
+      body: JSON.stringify({listId: this.state.listId, list: newList, amount: 0})
+     })
+      .then(res => res.json())
+      .then((result) => {
+        //console.log(this.state.list.length, result.nbProduct)
+        if(result.error === false) {
+          if(this.state.listId === null) {
+            this.setState({
+              listId: result.listId
+            });
+          }
+        } else {
+          console.log(result.error)
+          this.setState({
+            error: true
+          });
+        }
+      },
+      (error) => {
+        console.log(error)
+        this.setState({
+          error: true
+        });
+      }
+    )
+  }
+
+  handleAddProduct = () => {
+    const addProduct = {name: this.state.product, idcategory: this.state.selectedCatgId}
+    const newList = [addProduct].concat(this.state.list);
+    //console.log(addProduct);
+    this.setState({
+      list: newList,
+      product: ""
+    }, this.updateList(newList));
+  }
+
+  handleChange = (e) => {
+    const [index, value] = [e.target.name, e.target.value]
+    this.setState(() => ({
+      [index]: value
     }));
   }
 
-  updateIdcategory = (id) => {
-    this.setState({
-      idcategory: id
-    });
+  handleKey = (e) => {
+    if (e.key === 'Enter') {
+      this.handleAddProduct();
+    }
   }
 
   handleCheck = (e) => {
     const [index, val, prevList] = [e.target.value, e.target.checked, this.state.list];
     prevList[index].checked = val;
     this.setState({
-        list: prevList
-    });
+      list: prevList
+    }, this.updateList(prevList));
   }
 
   handleTrash = (e) => {
@@ -72,15 +117,20 @@ class Cart extends Component {
     const addToTrash = list[index];
     list.splice(index, 1);
     this.setState((prevState) => ({
-        list: list,
-        inTrash: [addToTrash].concat(prevState.inTrash)
-    }));
+      list: list,
+      inTrash: [addToTrash].concat(prevState.inTrash)
+    }), this.updateList(list));
   }
 
-  handleClickOnCategory = (id) => {
-    this.setState({
-      idcategory: id
-    });
+  handleClickOnCategory = (index) => {
+    const [id, name] = [parseInt(this.state.categories[index].id), this.state.categories[index].name]
+    if(id !== this.state.selectedCatgId)
+    {
+      this.setState({
+        selectedCatgId: id,
+        selectedCatgName: name
+      });
+    }
   }
 
   handleUndo = () => {
@@ -93,6 +143,7 @@ class Cart extends Component {
         inTrash: trash,
       }));
     }
+    this.updateList()
   }
 
   handleDone = () => {
@@ -104,7 +155,6 @@ class Cart extends Component {
   render() {
     const styleLoad = this.state.loading ? {position: 'relative', top: '0'} : {};
     const styleTaunt = {textDecorationLine: 'line-through'}
-    const styleHighlight = {backgroundColor: '#4e586b'}
 
     return (
       <div className="cart" style={styleLoad}>
@@ -122,19 +172,35 @@ class Cart extends Component {
             </div>
           :
             <div className="list-container">
-              <InputProduct
-                idcategory={this.state.idcategory}
-                updateIdcategory={this.updateIdcategory}
-                categories={this.state.categories} 
-                products={this.state.products} 
-                addToList={this.addToList}
-              />
+              <div className="row d-flex justify-content-center">
+                <div className="col col-8 col-sm-8">
+                  <input id="add-product"
+                    className="form-control form-control"
+                    name="product" 
+                    type="text" 
+                    value={this.state.product} 
+                    onChange={this.handleChange} 
+                    onKeyDown={this.handleKey} 
+                    placeholder={this.state.selectedCatgName} 
+                    // ref={this.textInput} 
+                  />
+                </div>
+                <div className="col col-3 col-sm-3 add">
+                  <input 
+                    className="btn btn btn-secondary"
+                    type="submit" 
+                    name="add" 
+                    value="Add" 
+                    onClick={this.handleAddProduct} 
+                  />
+                </div>
+              </div>
               <div className="list">
                 {this.state.categories.map(
                   (c, index) => 
                   <div key={index}>
-                    <a href="#top" onClick={this.handleClickOnCategory.bind(null, c.id)}>
-                      <span className="c-list d-flex text-center" style={this.state.idcategory === c.id ? styleHighlight : {}}>
+                    <a href="#top" onClick={this.handleClickOnCategory.bind(null, index)}>
+                      <span className={this.state.selectedCatgId === c.id ? "c-list-hover" : "c-list"}>
                         {c.name}<hr key={index}></hr>
                       </span>
                     </a>
@@ -143,7 +209,7 @@ class Cart extends Component {
                         p.idcategory === c.id 
                         ? 
                           <div key={index} className="p-list row">
-                            <div className="col col-10 col-sm-10">
+                            <div className="col col-11 col-sm-11">
                               <label className="p-list-name">
                                 <input className="check" 
                                   type="checkbox" 
@@ -155,7 +221,7 @@ class Cart extends Component {
                                 <span style={p.checked ? styleTaunt : {}}>{p.name}</span> 
                               </label>
                             </div>
-                            <div className="col col-2 col-sm-2">
+                            <div className="col col-1 col-sm-1">
                               <label className="p-list-trash"><img className="p-trash" src={trash} alt="trash" /> 
                                 <input hidden 
                                   className="form-check"
@@ -173,7 +239,7 @@ class Cart extends Component {
                 )}
               </div>
               <div className="b-list">
-                <button className="btn btn-sm btn-info undo" 
+                <button className="btn btn-sm btn-secondary undo" 
                   disabled={this.state.inTrash.length <= 0}
                   onClick={this.handleUndo}>Undo</button>
                 <button className="btn btn-sm btn-warning done" onClick={this.handleDone}>Done</button>

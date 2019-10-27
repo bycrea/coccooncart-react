@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import './App.css';
-import Nav from './pages/Nav';
-import Home from './pages/Home';
-import Cart from './pages/Cart';
-import Wallet from './pages/Wallet';
+import Nav from './components/Nav';
+import Home from './components/Home';
+import Cart from './components/Cart';
+import Wallet from './components/Wallet';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 
 class App extends Component {
