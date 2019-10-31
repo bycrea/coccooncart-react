@@ -12,51 +12,42 @@ class Cart extends Component {
       selectedCatgId: null,
       selectedCatgName: "",
       inTrash: [],
-      clickTwice: false,
+      countClick: 0,
       loading: true,
-      error: false,
-      token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE1NzI1MzgyODQsImV4cCI6MTU3Mjg5ODI4NCwicm9sZXMiOlsiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoiYWRtaW4ifQ.swg_-0DqQQ_y106WjBo_lW6exkOepOdO8lGGIixKY_OXLv7_frT-Hu5xpbUj0x5W_5uidSubKWL9lVQeGaS2s7xUcm9wCNVyAf_Zrju7Gk5hj6X3lAIEPhowGjqCCe_GedmzYN0wRYxclCVgUXCF-rONded7bp1F26xfBXsaUdZ67eT6zPbEUxcFrjPcbSW4Yn-Qy6VIgfI-THMDEnb7eggU0Ah8HMuarP1UQePlELSji_hYCW5S5mC8B-X1H7Myf9lb3xaIH1UWUWcMRZjMQS8FMutlkVxlmR1GUQ1cERAjuWccw2C66RPCkTqSAQ1AEJaLry5ohJmkdGNylodm9y6ZYdyzix0mLCIQNK0OkLcFq21FNN6PI6JgUZT6-PlVeZ6vZq40oNu8PDSl5qrcWrjstESQ3brRZh1vcSiy1fhfl12KgF7I3sRfmq-McVa8adgXFNwfZP0s9znQZggoidyVQa47OBMraIzsUM8FcRqOQCsPV082U-EuGVVbFI713XmuJUypKOEa64jXVPFgQSjdWy2eeHOZR1zM1oDVJtQ133F10TWxl0Em6gfHpJw4h34QmHcF5M_W54bVDiUh6aZROSAip5K7jWfRwYBcjgB1OpDbXpj88jDhMp9GY3hDBvvVtgXKstkH6Wrwi5trtMNlz812BQ3Gw3OXrZ6ujU0"
+      error: false
     }
     this.textInput = React.createRef();
   }
 
   componentDidMount() {
-    fetch('http://coccoon-api.com/api/getlist', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': 'Bearer ' + this.state.token
-        }
-      })
-      .then(res => res.json())
-      .then((result) => {
-        console.log(result);
-        if(result.error === false) {
-          this.setState({
-            listId: result.listId,
-            list: result.list || [],
-            categories: result.categories,
-            selectedCatgId: parseInt(result.categories[0].id),
-            selectedCatgName: result.categories[0].name,
-            loading: false,
-          });
-          console.log('success')
-        } else {
-          console.log(result.error)
-          this.setState({
-            error: true,
-            loading: false,
-          });
-        }
-      },
-      (error) => {
-        this.setState({
-          error: true,
-          loading: false
-        });
-        console.log(error)
-      }
-    )
+    this.setState({
+      list: [
+        { name: "fraise", idcategory: 3 },
+        { name: "pomme", idcategory: 3 },
+        { name: "coca", checked: false, idcategory: 2 },
+        { name: "pates", checked: true, idcategory: 1 },
+        { name: "tomates", checked: false, idcategory: 3 },
+        { name: "steak haché bio", checked: false, idcategory: 5 },
+        { name: "des choses", checked: false, idcategory: 10 }
+      ],
+      categories: [
+        { id: 1, name: "Epicerie" },
+        { id: 2, name: "Boissons" },
+        { id: 3, name: "Fruit/Légume" },
+        { id: 4, name: "Produits Laitiers" },
+        { id: 5, name: "Viandes/Poissons" },
+        { id: 6, name: "Petit Déjeuné" },
+        { id: 7, name: "Surgelés" },
+        { id: 8, name: "Plats Préparés" },
+        { id: 9, name: "Entretien" },
+        { id: 10, name: "Hygiène" },
+        { id: 11, name: "Divers" },
+        { id: 12, name: "Recettes (idées)" }
+      ],
+      selectedCatgId: parseInt(1),
+      selectedCatgName: "Epicerie",
+      loading: false,
+    })
   }
 
   // componentDidUpdate() {
@@ -64,37 +55,6 @@ class Cart extends Component {
   // }
 
   updateList(newList = this.state.list) {
-    fetch('http://coccoon-api.com/api/updatelist', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ' + this.state.token
-      },
-      body: JSON.stringify({listId: this.state.listId, list: newList, amount: 0, closed: false})
-     })
-      .then(res => res.json())
-      .then((result) => {
-        console.log(result)
-        if(result.error === false) {
-          if(this.state.listId === null) {
-            this.setState({
-              listId: result.listId
-            });
-          }
-        } else {
-          console.log(result.error)
-          this.setState({
-            error: true
-          });
-        }
-      },
-      (error) => {
-        console.log(error)
-        this.setState({
-          error: true
-        });
-      }
-    )
   }
 
   handleAddProduct = () => {
@@ -146,19 +106,19 @@ class Cart extends Component {
     const [id, name, click] = [
       parseInt(this.state.categories[index].id), 
       this.state.categories[index].name, 
-      this.state.clickTwice
+      this.state.countClick
     ];
-    if(id === this.state.selectedCatgId)
+    if(id === this.state.selectedCatgId && click === true)
     {
       this.setState({
-        clickTwice: false
+        countClick: false
       });
       this.textInput.current.focus();
     } else {
       this.setState({
         selectedCatgId: id,
         selectedCatgName: name,
-        clickTwice: false
+        countClick: true,
       });
     }
   }
@@ -183,9 +143,8 @@ class Cart extends Component {
   }
 
   render() {
-    const isSelect = this.state.selectedCatgId;
     const styleLoad = this.state.loading ? {position: 'relative', top: '0'} : {};
-    const styleTaunt = {textDecorationLine: 'line-through'};
+    const styleTaunt = {textDecorationLine: 'line-through'}
 
     return (
       <div className="cart" style={styleLoad}>
@@ -206,8 +165,8 @@ class Cart extends Component {
               <div className="list">
                 {this.state.categories.map(
                   (c, index) => 
-                  <div key={index} className="c-block">
-                    <span className={isSelect === c.id ? "c-list-hover" : "c-list"}
+                  <div key={index}>
+                    <span className={this.state.selectedCatgId === c.id ? "c-list-hover" : "c-list"}
                       onClick={this.handleClickOnCategory.bind(null, index)}>
                       {c.name}<hr key={index}></hr>
                     </span>
@@ -215,7 +174,7 @@ class Cart extends Component {
                       (p, index) => 
                         p.idcategory === c.id 
                         ? 
-                          <div key={index} className={isSelect === c.id? "p-list row pb-2" : "p-list row"}>
+                          <div key={index} className="p-list row">
                             <div className="col col-11 col-sm-11">
                               <label className="p-list-name">
                                 <input className="check" 
@@ -227,23 +186,19 @@ class Cart extends Component {
                                 <span style={p.checked ? styleTaunt : {}}>{p.name}</span> 
                               </label>
                             </div>
-                            {
-                              isSelect === c.id 
-                              ?
-                              <div className="col col-1 col-sm-1">
-                                <label className="p-list-trash"><img className="p-trash" src={trash} alt="trash" /> 
-                                  <input hidden 
-                                    className="form-check"
-                                    type="checkbox" 
-                                    value={index} 
-                                    onChange={this.handleTrash} 
-                                  />
-                                </label>
-                              </div> 
-                              : false
-                            }
+                            <div className="col col-1 col-sm-1">
+                              <label className="p-list-trash"><img className="p-trash" src={trash} alt="trash" /> 
+                                <input hidden 
+                                  className="form-check"
+                                  type="checkbox" 
+                                  value={index} 
+                                  onChange={this.handleTrash} 
+                                />
+                              </label>
+                            </div>                           
                           </div>
-                        : false
+                        : 
+                          false
                       )}
                   </div>
                 )}
