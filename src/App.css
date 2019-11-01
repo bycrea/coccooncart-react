@@ -31,6 +31,9 @@ body {
 
 .coccoon-logo {
   width: 50%;
+  position: relative;
+  left: 0.4em;
+  z-index: -1;
 }
 
 .title-welcome {

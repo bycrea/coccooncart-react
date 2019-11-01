@@ -24,7 +24,9 @@ class App extends Component {
       isLogged: false,
       error: false,
       username: "",
-      token: ""
+      token: "",
+      //urlApi: 'https://api.bycrea.me'
+      urlApi: 'http://coccoon-api.com'
     };
   }
 
@@ -56,14 +58,14 @@ class App extends Component {
       return false;
 
     const { cookies } = this.props;
-    fetch('http://coccoon-api.com/api/login_check', {
+    fetch(this.state.urlApi + '/api/login_check', {
       method: 'POST',
       headers: new Headers({'content-type': 'application/json'}),
       body: JSON.stringify({username: user, password: pass})
     })
     .then(res => res.json())
       .then((result) => {
-        console.log(result);
+        //console.log(result);
         if(!result.token) {
           this.setState({
             error: true,

@@ -9,11 +9,11 @@ class Cart extends Component {
       isLogged: this.props.state.isLogged,
       username: this.props.state.username,
       token: this.props.state.token,
+      urlApi: this.props.state.urlApi,
       listId: null,
       list: [],
       categories: [],
       product: "",
-      nbChecked: 0,
       selectedCatgId: null,
       selectedCatgName: "",
       inTrash: [],
@@ -26,7 +26,7 @@ class Cart extends Component {
 
   componentDidMount() {
 
-    fetch('http://coccoon-api.com/api/getlist', {
+    fetch(this.state.urlApi + '/api/getlist', {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -37,19 +37,12 @@ class Cart extends Component {
       .then((result) => {
         //console.log(result);
         if(result.error === false) {
-          let nbChecked = 0;
-          (result.list || []).forEach(e => {
-            if(typeof e.checked !== 'undefined' && e.checked) {
-              nbChecked++;
-            }
-          });
           this.setState({
             listId: result.listId,
             list: result.list || [],
             categories: result.categories,
             selectedCatgId: parseInt(result.categories[0].id),
             selectedCatgName: result.categories[0].name,
-            nbChecked: nbChecked,
             loading: false
           });
           console.log('success')
@@ -72,7 +65,7 @@ class Cart extends Component {
   }
 
   updateList(newList = this.state.list) {
-    fetch('http://coccoon-api.com/api/updatelist', {
+    fetch(this.state.urlApi + '/api/updatelist', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -106,7 +99,7 @@ class Cart extends Component {
   }
 
   closeList(amount) {
-    fetch('http://coccoon-api.com/api/closelist', {
+    fetch(this.state.urlApi + '/api/closelist', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -134,10 +127,8 @@ class Cart extends Component {
     )
   }
 
-  componentDidUpdate() {
-    document.getElementById('amount').style.backgroundColor = 'white';
-    //console.log(this.state.nbChecked)
-  }
+  // componentDidUpdate() {
+  // }
 
   handleAddProduct = () => {
     if(this.state.product.replace(/\s+/g, "") !== "")
@@ -167,17 +158,10 @@ class Cart extends Component {
   }
 
   handleCheck = (e) => {
-    const [index, val, prevList, nbChecked] = [
-      e.target.value, 
-      e.target.checked, 
-      this.state.list,
-      this.state.nbChecked
-    ];
-    let newNb = val ? nbChecked + 1 : nbChecked - 1;
+    const [index, val, prevList] = [e.target.value, e.target.checked, this.state.list];
     prevList[index].checked = val;
     this.setState({
       list: prevList,
-      nbChecked: newNb
     }, this.updateList(prevList));
   }
 
@@ -192,11 +176,15 @@ class Cart extends Component {
   }
 
   handleClickOnCategory = (index) => {
+    document.getElementById('amount').style.backgroundColor = 'white';
+    document.getElementById('amount').value = "";
+    
     const [id, name, click] = [
       parseInt(this.state.categories[index].id), 
       this.state.categories[index].name, 
       this.state.clickTwice
     ];
+    
     if(id === this.state.selectedCatgId)
     {
       this.setState({
@@ -215,22 +203,29 @@ class Cart extends Component {
   handleUndo = () => {
     if(this.state.inTrash.length > 0) 
     { 
-      const [fromTrash, trash] = [this.state.inTrash[0], this.state.inTrash, this.state.list];
+      const [fromTrash, trash, list] = [this.state.inTrash[0], this.state.inTrash, this.state.list];
       trash.splice(0, 1);
-      this.setState((prevState) => ({
-        list: [fromTrash].concat(prevState.list),
+      const newList = [fromTrash].concat(list);
+      this.setState({
+        list: newList,
         inTrash: trash,
-      }));
+      }, this.updateList(newList));
     }
-    this.updateList()
   }
 
   handleDone = () => {
-    const [amount, listId, nbChecked] = [
+    const [amount, list, listId] = [
       document.getElementById('amount').value, 
-      this.state.listId,
-      this.state.nbChecked
+      this.state.list,
+      this.state.listId
     ];
+
+    let nbChecked = 0;
+    (list || []).forEach(e => {
+      if(typeof e.checked !== 'undefined' && e.checked) {
+        nbChecked++;
+      }
+    });
 
     if(amount > 0 && listId !== null && nbChecked > 0) {
       document.getElementById('amount').style.backgroundColor = 'white';
@@ -314,6 +309,7 @@ class Cart extends Component {
                       className="form-control form-control-sm"
                       name="product" 
                       type="text" 
+                      autocomplete="off" 
                       value={this.state.product} 
                       onChange={this.handleChange} 
                       onKeyDown={this.handleKey} 
@@ -346,6 +342,7 @@ class Cart extends Component {
                       className="form-control form-control-sm amount"
                       name="amount" 
                       type="number" 
+                      autocomplete="off" 
                       placeholder="€"
                     />
                   </div>
