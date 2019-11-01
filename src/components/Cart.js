@@ -3,24 +3,29 @@ import trash from '../images/trash.png';
 
 class Cart extends Component {
   constructor(props) {
-    super(props)
+    super(props);
+
     this.state = {
+      isLogged: this.props.state.isLogged,
+      username: this.props.state.username,
+      token: this.props.state.token,
       listId: null,
       list: [],
       categories: [],
       product: "",
+      nbChecked: 0,
       selectedCatgId: null,
       selectedCatgName: "",
       inTrash: [],
       clickTwice: false,
       loading: true,
       error: false,
-      token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE1NzI1MzgyODQsImV4cCI6MTU3Mjg5ODI4NCwicm9sZXMiOlsiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoiYWRtaW4ifQ.swg_-0DqQQ_y106WjBo_lW6exkOepOdO8lGGIixKY_OXLv7_frT-Hu5xpbUj0x5W_5uidSubKWL9lVQeGaS2s7xUcm9wCNVyAf_Zrju7Gk5hj6X3lAIEPhowGjqCCe_GedmzYN0wRYxclCVgUXCF-rONded7bp1F26xfBXsaUdZ67eT6zPbEUxcFrjPcbSW4Yn-Qy6VIgfI-THMDEnb7eggU0Ah8HMuarP1UQePlELSji_hYCW5S5mC8B-X1H7Myf9lb3xaIH1UWUWcMRZjMQS8FMutlkVxlmR1GUQ1cERAjuWccw2C66RPCkTqSAQ1AEJaLry5ohJmkdGNylodm9y6ZYdyzix0mLCIQNK0OkLcFq21FNN6PI6JgUZT6-PlVeZ6vZq40oNu8PDSl5qrcWrjstESQ3brRZh1vcSiy1fhfl12KgF7I3sRfmq-McVa8adgXFNwfZP0s9znQZggoidyVQa47OBMraIzsUM8FcRqOQCsPV082U-EuGVVbFI713XmuJUypKOEa64jXVPFgQSjdWy2eeHOZR1zM1oDVJtQ133F10TWxl0Em6gfHpJw4h34QmHcF5M_W54bVDiUh6aZROSAip5K7jWfRwYBcjgB1OpDbXpj88jDhMp9GY3hDBvvVtgXKstkH6Wrwi5trtMNlz812BQ3Gw3OXrZ6ujU0"
-    }
+    };
     this.textInput = React.createRef();
   }
 
   componentDidMount() {
+
     fetch('http://coccoon-api.com/api/getlist', {
         method: 'GET',
         headers: {
@@ -30,15 +35,22 @@ class Cart extends Component {
       })
       .then(res => res.json())
       .then((result) => {
-        console.log(result);
+        //console.log(result);
         if(result.error === false) {
+          let nbChecked = 0;
+          (result.list || []).forEach(e => {
+            if(typeof e.checked !== 'undefined' && e.checked) {
+              nbChecked++;
+            }
+          });
           this.setState({
             listId: result.listId,
             list: result.list || [],
             categories: result.categories,
             selectedCatgId: parseInt(result.categories[0].id),
             selectedCatgName: result.categories[0].name,
-            loading: false,
+            nbChecked: nbChecked,
+            loading: false
           });
           console.log('success')
         } else {
@@ -59,10 +71,6 @@ class Cart extends Component {
     )
   }
 
-  // componentDidUpdate() {
-  //   console.log(this.textInput.current)
-  // }
-
   updateList(newList = this.state.list) {
     fetch('http://coccoon-api.com/api/updatelist', {
       method: 'POST',
@@ -74,7 +82,7 @@ class Cart extends Component {
      })
       .then(res => res.json())
       .then((result) => {
-        console.log(result)
+        //console.log(result)
         if(result.error === false) {
           if(this.state.listId === null) {
             this.setState({
@@ -95,6 +103,40 @@ class Cart extends Component {
         });
       }
     )
+  }
+
+  closeList(amount) {
+    fetch('http://coccoon-api.com/api/closelist', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ' + this.state.token
+      },
+      body: JSON.stringify({listId: this.state.listId, list: this.state.list, amount: amount, closed: true})
+     })
+      .then(res => res.json())
+      .then((result) => {
+        console.log(result)
+        if(result.error !== true) {
+          if(result.newId !== null) {
+            window.location = '/cart';
+          } else {
+            window.location = '/wallet';
+          }
+        }
+      },
+      (error) => {
+        console.log(error)
+        this.setState({
+          error: true
+        });
+      }
+    )
+  }
+
+  componentDidUpdate() {
+    document.getElementById('amount').style.backgroundColor = 'white';
+    //console.log(this.state.nbChecked)
   }
 
   handleAddProduct = () => {
@@ -125,10 +167,17 @@ class Cart extends Component {
   }
 
   handleCheck = (e) => {
-    const [index, val, prevList] = [e.target.value, e.target.checked, this.state.list];
+    const [index, val, prevList, nbChecked] = [
+      e.target.value, 
+      e.target.checked, 
+      this.state.list,
+      this.state.nbChecked
+    ];
+    let newNb = val ? nbChecked + 1 : nbChecked - 1;
     prevList[index].checked = val;
     this.setState({
-      list: prevList
+      list: prevList,
+      nbChecked: newNb
     }, this.updateList(prevList));
   }
 
@@ -151,7 +200,7 @@ class Cart extends Component {
     if(id === this.state.selectedCatgId)
     {
       this.setState({
-        clickTwice: false
+        clickTwice: !click
       });
       this.textInput.current.focus();
     } else {
@@ -177,8 +226,18 @@ class Cart extends Component {
   }
 
   handleDone = () => {
-    const amount = document.getElementById('amount').value;
-    console.log(amount)
+    const [amount, listId, nbChecked] = [
+      document.getElementById('amount').value, 
+      this.state.listId,
+      this.state.nbChecked
+    ];
+
+    if(amount > 0 && listId !== null && nbChecked > 0) {
+      document.getElementById('amount').style.backgroundColor = 'white';
+      this.closeList(amount);
+    } else {
+      document.getElementById('amount').style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+    }
     document.getElementById('amount').value = "";
   }
 

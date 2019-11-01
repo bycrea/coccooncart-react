@@ -1,30 +1,8 @@
 import React, { Component } from 'react';
 
 class Cart extends Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      
-    }
-  }
 
   componentDidMount() {
-    fetch('http://coccooncart.com/api/products_list')
-      .then(res => res.json())
-      .then((result) => {
-          this.setState({
-            
-          })
-          console.log('success')
-      },
-      (error) => {
-        this.setState({
-          loading: false,
-          error: true
-        })
-        console.log(error)
-      }
-    )
   }
 
   componentDidUpdate() {
