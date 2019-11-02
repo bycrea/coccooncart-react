@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import $ from 'jquery'; 
 import trash from '../images/trash.png';
 
 class Cart extends Component {
@@ -14,6 +15,7 @@ class Cart extends Component {
       list: [],
       categories: [],
       product: "",
+      modify: "",
       selectedCatgId: null,
       selectedCatgName: "",
       inTrash: [],
@@ -25,36 +27,36 @@ class Cart extends Component {
   }
 
   componentDidMount() {
-
+    
     fetch(this.state.urlApi + '/api/getlist', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': 'Bearer ' + this.state.token
-        }
-      })
-      .then(res => res.json())
-      .then((result) => {
-        //console.log(result);
-        if(result.error === false) {
-          this.setState({
-            listId: result.listId,
-            list: result.list || [],
-            categories: result.categories,
-            selectedCatgId: parseInt(result.categories[0].id),
-            selectedCatgName: result.categories[0].name,
-            loading: false
-          });
-          console.log('success')
-        } else {
-          console.log(result.error)
-          this.setState({
-            error: true,
-            loading: false,
-          });
-        }
-      },
-      (error) => {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ' + this.state.token
+      }
+    })
+    .then(res => res.json())
+    .then((result) => {
+      //console.log(result);
+      if(result.error === false) {
+        this.setState({
+          listId: result.listId,
+          list: result.list || [],
+          categories: result.categories,
+          modify: result.modify,
+          selectedCatgId: parseInt(result.categories[0].id),
+          selectedCatgName: result.categories[0].name,
+          loading: false
+        });
+        console.log('success')
+      } else {
+        console.log(result.error)
+        this.setState({
+          error: true,
+          loading: false,
+        });
+      }
+    }, (error) => {
         this.setState({
           error: true,
           loading: false
@@ -64,32 +66,71 @@ class Cart extends Component {
     )
   }
 
-  updateList(newList = this.state.list) {
-    fetch(this.state.urlApi + '/api/updatelist', {
+  // updateList(newList = this.state.list) {
+  //   fetch(this.state.urlApi + '/api/updatelist', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Accept': 'application/json',
+  //       'Authorization': 'Bearer ' + this.state.token
+  //     },
+  //     body: JSON.stringify({listId: this.state.listId, list: newList, amount: 0, closed: false})
+  //    })
+  //     .then(res => res.json())
+  //     .then((result) => {
+  //       //console.log(result)
+  //       if(result.error === false) {
+  //         this.setState({
+  //           list: result.list,
+  //           listId: result.listId,
+  //           modify: result.modify
+  //         });
+  //       } else {
+  //         console.log(result.error)
+  //         this.setState({
+  //           error: true
+  //         });
+  //       }
+  //     }, (error) => {
+  //       console.log(error)
+  //       this.setState({
+  //         error: true
+  //       });
+  //     }
+  //   )
+  // }
+
+  updateProduct(product, action = 'add') {
+    console.log(product)
+    
+    fetch(this.state.urlApi + '/api/updateProduct', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Authorization': 'Bearer ' + this.state.token
       },
-      body: JSON.stringify({listId: this.state.listId, list: newList, amount: 0, closed: false})
+      body: JSON.stringify({
+        listId: this.state.listId, 
+        product: product,
+        action: action
+      })
      })
       .then(res => res.json())
       .then((result) => {
         //console.log(result)
         if(result.error === false) {
-          if(this.state.listId === null) {
-            this.setState({
-              listId: result.listId
-            });
-          }
+          this.setState({
+            loading: false,
+            list: result.list,
+            listId: result.listId,
+            modify: result.modify
+          });
         } else {
           console.log(result.error)
           this.setState({
             error: true
           });
         }
-      },
-      (error) => {
+      }, (error) => {
         console.log(error)
         this.setState({
           error: true
@@ -99,26 +140,30 @@ class Cart extends Component {
   }
 
   closeList(amount) {
+    this.setState({ loading: true });
     fetch(this.state.urlApi + '/api/closelist', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Authorization': 'Bearer ' + this.state.token
       },
-      body: JSON.stringify({listId: this.state.listId, list: this.state.list, amount: amount, closed: true})
+      body: JSON.stringify({
+        listId: this.state.listId, 
+        list: this.state.list, 
+        amount: amount
+      })
      })
       .then(res => res.json())
       .then((result) => {
         console.log(result)
         if(result.error !== true) {
-          if(result.newId !== null) {
+          if(result.newListId !== null) {
             window.location = '/cart';
           } else {
             window.location = '/wallet';
           }
         }
-      },
-      (error) => {
+      }, (error) => {
         console.log(error)
         this.setState({
           error: true
@@ -127,19 +172,15 @@ class Cart extends Component {
     )
   }
 
-  // componentDidUpdate() {
-  // }
-
   handleAddProduct = () => {
     if(this.state.product.replace(/\s+/g, "") !== "")
     {
       const addProduct = {name: this.state.product, idcategory: this.state.selectedCatgId}
       const newList = [addProduct].concat(this.state.list);
-      //console.log(addProduct);
       this.setState({
-        list: newList,
-        product: ""
-      }, this.updateList(newList));
+        product: "",
+        loading: true
+      }, this.updateProduct(addProduct));
     }
     this.textInput.current.focus();
   }
@@ -161,8 +202,8 @@ class Cart extends Component {
     const [index, val, prevList] = [e.target.value, e.target.checked, this.state.list];
     prevList[index].checked = val;
     this.setState({
-      list: prevList,
-    }, this.updateList(prevList));
+      loading: true
+    }, this.updateProduct(index, 'check'));
   }
 
   handleTrash = (e) => {
@@ -170,9 +211,22 @@ class Cart extends Component {
     const addToTrash = list[index];
     list.splice(index, 1);
     this.setState((prevState) => ({
-      list: list,
+      loading: true,
       inTrash: [addToTrash].concat(prevState.inTrash)
-    }), this.updateList(list));
+    }), this.updateProduct(index, 'delete'));
+  }
+
+  handleUndo = () => {
+    if(this.state.inTrash.length > 0) 
+    { 
+      const [fromTrash, trash, list] = [this.state.inTrash[0], this.state.inTrash, this.state.list];
+      trash.splice(0, 1);
+      const newList = [fromTrash].concat(list);
+      this.setState({
+        loading: true,
+        inTrash: trash,
+      }, this.updateProduct(fromTrash));
+    }
   }
 
   handleClickOnCategory = (index) => {
@@ -187,11 +241,13 @@ class Cart extends Component {
     
     if(id === this.state.selectedCatgId)
     {
+      $('.footer-list').fadeIn();
       this.setState({
         clickTwice: !click
       });
       this.textInput.current.focus();
     } else {
+      $('.footer-list').fadeOut();
       this.setState({
         selectedCatgId: id,
         selectedCatgName: name,
@@ -200,20 +256,7 @@ class Cart extends Component {
     }
   }
 
-  handleUndo = () => {
-    if(this.state.inTrash.length > 0) 
-    { 
-      const [fromTrash, trash, list] = [this.state.inTrash[0], this.state.inTrash, this.state.list];
-      trash.splice(0, 1);
-      const newList = [fromTrash].concat(list);
-      this.setState({
-        list: newList,
-        inTrash: trash,
-      }, this.updateList(newList));
-    }
-  }
-
-  handleDone = () => {
+  handlePay = () => {
     const [amount, list, listId] = [
       document.getElementById('amount').value, 
       this.state.list,
@@ -238,22 +281,17 @@ class Cart extends Component {
 
   render() {
     const isSelect = this.state.selectedCatgId;
-    const styleLoad = this.state.loading ? {position: 'relative', top: '0'} : {};
+    const styleLoad = this.state.loading && !(this.state.categories).length? {position: 'relative', top: '0'} : {};
     const styleTaunt = {textDecorationLine: 'line-through'};
-
+    
     return (
       <div className="cart" style={styleLoad}>
         <h4 className="title">Shopping List</h4>
-        { this.state.loading 
-        ? 
-            <div>
-              <p>Loading...</p>
-            </div>
-        :
-          this.state.error 
+        <p className="modify">{this.state.loading ? 'loading' : this.state.modify}</p>
+        { this.state.error 
           ? 
             <div>
-              <p>Erreur de connexion.</p>
+              <p>Connexion error.</p>
             </div>
           :
             <div className="list-container">
@@ -309,7 +347,7 @@ class Cart extends Component {
                       className="form-control form-control-sm"
                       name="product" 
                       type="text" 
-                      autocomplete="off" 
+                      autoComplete="off" 
                       value={this.state.product} 
                       onChange={this.handleChange} 
                       onKeyDown={this.handleKey} 
@@ -335,14 +373,14 @@ class Cart extends Component {
                     </button>
                   </div>
                   <div className="col col-5 col-sm-5">
-                    <button className="btn btn-sm btn-warning done" onClick={this.handleDone}>Done</button>
+                    <button className="btn btn-sm btn-warning pay" onClick={this.handlePay}>Pay</button>
                   </div>
                   <div className="col col-3 col-sm-3">
                     <input id="amount"
                       className="form-control form-control-sm amount"
                       name="amount" 
                       type="number" 
-                      autocomplete="off" 
+                      autoComplete="off" 
                       placeholder="€"
                     />
                   </div>

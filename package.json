@@ -4,6 +4,7 @@
   "private": true,
   "homepage": "https://coccoon.bycrea.me/",
   "dependencies": {
+    "jquery": "^3.4.1",
     "react": "^16.10.1",
     "react-cookie": "^4.0.1",
     "react-dom": "^16.10.1",
