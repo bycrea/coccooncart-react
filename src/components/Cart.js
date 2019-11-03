@@ -163,10 +163,12 @@ class Cart extends Component {
         list: newList,
         loading: true
       }, this.updateProduct(addProduct));
+      $('.input-product input').focus();
     } else if (!this.state.selectedCatgId) {
-        this.handleAlert("Select a category first");
+        this.handleAlert("please select a category");
     } else if (this.state.product.replace(/\s+/g, "") === "") {
-        this.handleAlert("Enter a product name");
+        this.handleAlert("please fill a product name");
+        $('.input-product input').focus();
     }
   }
 
