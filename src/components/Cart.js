@@ -25,8 +25,7 @@ class Cart extends Component {
       loading: true,
       error: false,
     };
-    // this.textInput = React.createRef();
-    // this.textInput.current.focus();
+    this.textInput = React.createRef();
   }
 
   componentDidMount() {
@@ -163,12 +162,14 @@ class Cart extends Component {
         list: newList,
         loading: true
       }, this.updateProduct(addProduct));
-      $('.input-product input').focus();
+      this.textInput.current.focus();
+      // $('.input-product input').focus();
     } else if (!this.state.selectedCatgId) {
         this.handleAlert("please select a category");
     } else if (this.state.product.replace(/\s+/g, "") === "") {
         this.handleAlert("please fill a product name");
-        $('.input-product input').focus();
+        this.textInput.current.focus();
+        // $('.input-product input').focus();
     }
   }
 
@@ -235,7 +236,8 @@ class Cart extends Component {
             clickTwice: false,
             focus: false
         });
-        $('.input-product input').blur();
+        this.textInput.current.blur();
+        //$('.input-product input').blur();
     } else {
         this.setState({
             selectedCatgId: id,
@@ -243,15 +245,18 @@ class Cart extends Component {
             clickTwice: true
         });
         if(focus) {
-            $('.input-product input').focus();
+          this.textInput.current.focus();
+          //$('.input-product input').focus();
         } else {
-            $('.input-product input').blur();
+          this.textInput.current.blur();
+          //$('.input-product input').blur();
         }
     }
   }
 
   handleClickPlus = (index) => {
-    $('.input-product input').focus();
+    this.textInput.current.focus();
+    //$('.input-product input').focus();
     this.setState({
         selectedCatgId: parseInt(this.state.categories[index].id),
         selectedCatgName: this.state.categories[index].name,
@@ -365,7 +370,7 @@ class Cart extends Component {
                   onChange={this.handleChange} 
                   onKeyDown={this.handleKey} 
                   placeholder={this.state.selectedCatgName || 'Select a category'} 
-                  // ref={this.textInput}
+                  ref={this.textInput}
                 />
               </div>
               <div className="add">
