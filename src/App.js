@@ -1,6 +1,4 @@
 // BROWSER=firefox yarn start
-import './App.css';
-
 import React, { Component } from 'react';
 import { instanceOf } from 'prop-types';
 import { withCookies, Cookies } from 'react-cookie';

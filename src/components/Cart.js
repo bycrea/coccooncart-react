@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import $ from 'jquery'; 
+
 import trash from '../images/trash.png';
 
 class Cart extends Component {
@@ -20,10 +21,12 @@ class Cart extends Component {
       selectedCatgName: "",
       inTrash: [],
       clickTwice: false,
+      focus: false,
       loading: true,
       error: false,
     };
-    this.textInput = React.createRef();
+    // this.textInput = React.createRef();
+    // this.textInput.current.focus();
   }
 
   componentDidMount() {
@@ -44,13 +47,13 @@ class Cart extends Component {
           list: result.list || [],
           categories: result.categories,
           modify: result.modify,
-          selectedCatgId: parseInt(result.categories[0].id),
-          selectedCatgName: result.categories[0].name,
-          loading: false
+          //selectedCatgId: parseInt(result.categories[0].id),
+          //selectedCatgName: result.categories[0].name,
+          loading: false,
+          error: false
         });
         console.log('success')
       } else {
-        console.log(result.error)
         this.setState({
           error: true,
           loading: false,
@@ -66,41 +69,16 @@ class Cart extends Component {
     )
   }
 
-  // updateList(newList = this.state.list) {
-  //   fetch(this.state.urlApi + '/api/updatelist', {
-  //     method: 'POST',
-  //     headers: {
-  //       'Accept': 'application/json',
-  //       'Authorization': 'Bearer ' + this.state.token
-  //     },
-  //     body: JSON.stringify({listId: this.state.listId, list: newList, amount: 0, closed: false})
-  //    })
-  //     .then(res => res.json())
-  //     .then((result) => {
-  //       //console.log(result)
-  //       if(result.error === false) {
-  //         this.setState({
-  //           list: result.list,
-  //           listId: result.listId,
-  //           modify: result.modify
-  //         });
-  //       } else {
-  //         console.log(result.error)
-  //         this.setState({
-  //           error: true
-  //         });
-  //       }
-  //     }, (error) => {
-  //       console.log(error)
-  //       this.setState({
-  //         error: true
-  //       });
-  //     }
-  //   )
-  // }
+  componentDidUpdate() {
+      this.handleAlert("");
+      if($('.input-product input').is(':focus') && !this.state.focus) {
+        this.setState({
+            focus: true
+        });
+      }
+  }
 
   updateProduct(product, action = 'add') {
-    console.log(product)
     
     fetch(this.state.urlApi + '/api/updateProduct', {
       method: 'POST',
@@ -122,18 +100,20 @@ class Cart extends Component {
             loading: false,
             list: result.list,
             listId: result.listId,
-            modify: result.modify
+            modify: result.modify,
+            error: false
           });
         } else {
-          console.log(result.error)
           this.setState({
-            error: true
+            error: true,
+            loading: false
           });
         }
       }, (error) => {
         console.log(error)
         this.setState({
-          error: true
+          error: true,
+          loading: false
         });
       }
     )
@@ -155,7 +135,7 @@ class Cart extends Component {
      })
       .then(res => res.json())
       .then((result) => {
-        console.log(result)
+        //console.log(result)
         if(result.error !== true) {
           if(result.newListId !== null) {
             window.location = '/cart';
@@ -166,23 +146,28 @@ class Cart extends Component {
       }, (error) => {
         console.log(error)
         this.setState({
-          error: true
+          error: true,
+          loading: false
         });
       }
     )
   }
 
   handleAddProduct = () => {
-    if(this.state.product.replace(/\s+/g, "") !== "")
+    if(this.state.product.replace(/\s+/g, "") !== "" && this.state.selectedCatgId)
     {
       const addProduct = {name: this.state.product, idcategory: this.state.selectedCatgId}
       const newList = [addProduct].concat(this.state.list);
       this.setState({
         product: "",
+        list: newList,
         loading: true
       }, this.updateProduct(addProduct));
+    } else if (!this.state.selectedCatgId) {
+        this.handleAlert("Select a category first");
+    } else if (this.state.product.replace(/\s+/g, "") === "") {
+        this.handleAlert("Enter a product name");
     }
-    this.textInput.current.focus();
   }
 
   handleChange = (e) => {
@@ -199,9 +184,10 @@ class Cart extends Component {
   }
 
   handleCheck = (e) => {
-    const [index, val, prevList] = [e.target.value, e.target.checked, this.state.list];
-    prevList[index].checked = val;
+    const [index, val, list] = [e.target.value, e.target.checked, this.state.list];
+    list[index].checked = val;
     this.setState({
+      list: list,
       loading: true
     }, this.updateProduct(index, 'check'));
   }
@@ -211,8 +197,9 @@ class Cart extends Component {
     const addToTrash = list[index];
     list.splice(index, 1);
     this.setState((prevState) => ({
-      loading: true,
-      inTrash: [addToTrash].concat(prevState.inTrash)
+      list: list,
+      inTrash: [addToTrash].concat(prevState.inTrash),
+      loading: true
     }), this.updateProduct(index, 'delete'));
   }
 
@@ -223,37 +210,52 @@ class Cart extends Component {
       trash.splice(0, 1);
       const newList = [fromTrash].concat(list);
       this.setState({
-        loading: true,
+        list: newList,
         inTrash: trash,
+        loading: true
       }, this.updateProduct(fromTrash));
     }
   }
 
-  handleClickOnCategory = (index) => {
-    document.getElementById('amount').style.backgroundColor = 'white';
-    document.getElementById('amount').value = "";
-    
-    const [id, name, click] = [
-      parseInt(this.state.categories[index].id), 
-      this.state.categories[index].name, 
-      this.state.clickTwice
+  handleClickCategory = (index) => {
+    const [id, name, click, focus] = [
+        parseInt(this.state.categories[index].id), 
+        this.state.categories[index].name, 
+        this.state.clickTwice,
+        this.state.focus
     ];
     
-    if(id === this.state.selectedCatgId)
+    if(id === this.state.selectedCatgId && click)
     {
-      $('.footer-list').fadeIn();
-      this.setState({
-        clickTwice: !click
-      });
-      this.textInput.current.focus();
+        this.setState({
+            selectedCatgId: null,
+            selectedCatgName: "",
+            clickTwice: false,
+            focus: false
+        });
+        $('.input-product input').blur();
     } else {
-      $('.footer-list').fadeOut();
-      this.setState({
-        selectedCatgId: id,
-        selectedCatgName: name,
-        clickTwice: false
-      });
+        this.setState({
+            selectedCatgId: id,
+            selectedCatgName: name,
+            clickTwice: true
+        });
+        if(focus) {
+            $('.input-product input').focus();
+        } else {
+            $('.input-product input').blur();
+        }
     }
+  }
+
+  handleClickPlus = (index) => {
+    $('.input-product input').focus();
+    this.setState({
+        selectedCatgId: parseInt(this.state.categories[index].id),
+        selectedCatgName: this.state.categories[index].name,
+        clickTwice: true,
+        focus: true
+    });
   }
 
   handlePay = () => {
@@ -279,115 +281,123 @@ class Cart extends Component {
     document.getElementById('amount').value = "";
   }
 
+  handleAlert = (message) => {
+    if(message) {
+        $('.alert').text(message).slideUp(100).fadeIn(200);
+    } else {
+        $('.alert').css('display', 'none');
+        $('.alert').text(message);
+    }
+  }
+
   render() {
+    const styleLoad = this.state.loading && !(this.state.categories).length ? {position: 'relative', top: '0'} : {};
+    const connexion = this.state.error ? 'offline' : this.state.modify;
+
     const isSelect = this.state.selectedCatgId;
-    const styleLoad = this.state.loading && !(this.state.categories).length? {position: 'relative', top: '0'} : {};
     const styleTaunt = {textDecorationLine: 'line-through'};
     
     return (
       <div className="cart" style={styleLoad}>
         <h4 className="title">Shopping List</h4>
-        <p className="modify">{this.state.loading ? 'loading' : this.state.modify}</p>
-        { this.state.error 
-          ? 
-            <div>
-              <p>Connexion error.</p>
-            </div>
-          :
-            <div className="list-container">
-              <div className="list">
-                {this.state.categories.map(
-                  (c, index) => 
-                  <div key={index} className="c-block">
-                    <span className={isSelect === c.id ? "c-list-hover" : "c-list"}
-                      onClick={this.handleClickOnCategory.bind(null, index)}>
-                      {c.name}<hr key={index}></hr>
-                    </span>
-                    {this.state.list.map(
-                      (p, index) => 
-                        p.idcategory === c.id 
-                        ? 
-                          <div key={index} className={isSelect === c.id? "p-list row pb-2" : "p-list row"}>
-                            <div className="col col-11 col-sm-11">
-                              <label className="p-list-name">
-                                <input className="check" 
-                                  type="checkbox" 
-                                  checked={p.checked || false} 
-                                  value={index} 
-                                  onChange={this.handleCheck} 
-                                />
-                                <span style={p.checked ? styleTaunt : {}}>{p.name}</span> 
-                              </label>
-                            </div>
-                            {
-                              isSelect === c.id 
-                              ?
-                              <div className="col col-1 col-sm-1">
-                                <label className="p-list-trash"><img className="p-trash" src={trash} alt="trash" /> 
-                                  <input hidden 
+        <p className="modify">{this.state.loading ? 'loading' : connexion}</p>
+        <div className="list-container">
+          <div className="list">
+            {this.state.categories.map(
+              (c, index) => 
+              <div key={index} className="c-block">
+                <div className={isSelect === c.id ? "c-list-hover" : "c-list"}>
+                    <span className="c-name" onClick={this.handleClickCategory.bind(null, index)}>{c.name}</span>
+                    { isSelect === c.id 
+                    ? <span className="plus" onClick={this.handleClickPlus.bind(null, index)}>+</span> 
+                    : <span className="plus" onClick={this.handleClickPlus.bind(null, index)}>&nbsp;</span> }
+                </div>
+                {this.state.list.map(
+                  (p, index) => 
+                    p.idcategory === c.id 
+                    ? 
+                      <div key={index} className={isSelect === c.id? "p-list row pb-2" : "p-list row"}>
+                        <div className="col col-11 col-sm-11">
+                          <label className="p-list-name">
+                            <input className="check" 
+                              type="checkbox" 
+                              checked={p.checked || false} 
+                              value={index} 
+                              onChange={this.handleCheck} 
+                            />
+                            <span style={p.checked ? styleTaunt : {}}>{p.name}</span> 
+                          </label>
+                        </div>
+                        {
+                          isSelect === c.id 
+                          ?
+                          <div className="col col-1 col-sm-1">
+                            <label className="p-list-trash">
+                                <img className="p-trash" src={trash} alt="trash" /> 
+                                <input hidden 
                                     className="form-check"
                                     type="checkbox" 
                                     value={index} 
                                     onChange={this.handleTrash} 
-                                  />
-                                </label>
-                              </div> 
-                              : false
-                            }
-                          </div>
-                        : false
-                      )}
-                  </div>
-                )}
+                                />
+                            </label>
+                          </div> 
+                          : false
+                        }
+                      </div>
+                    : false
+                  )}
               </div>
-              <div className="footer-list">
-                <div className="row pb-2 input-product">
-                  <div className="col col-9 col-sm-9">
-                    <input
-                      className="form-control form-control-sm"
-                      name="product" 
-                      type="text" 
-                      autoComplete="off" 
-                      value={this.state.product} 
-                      onChange={this.handleChange} 
-                      onKeyDown={this.handleKey} 
-                      placeholder={this.state.selectedCatgName} 
-                      ref={this.textInput} 
-                    />
-                  </div>
-                  <div className="col col-3 col-sm-3 add">
-                    <input 
-                      className="btn btn-sm btn-secondary"
-                      type="submit" 
-                      name="add" 
-                      value="Add" 
-                      onClick={this.handleAddProduct} 
-                    />
-                  </div>
-                </div>
-                <div className="row buttons">
-                  <div className="col col-3 col-sm-3">
-                    <button className="btn btn-sm btn-secondary undo" 
-                      disabled={this.state.inTrash.length <= 0}
-                      onClick={this.handleUndo}>Undo
-                    </button>
-                  </div>
-                  <div className="col col-5 col-sm-5">
-                    <button className="btn btn-sm btn-warning pay" onClick={this.handlePay}>Pay</button>
-                  </div>
-                  <div className="col col-3 col-sm-3">
-                    <input id="amount"
-                      className="form-control form-control-sm amount"
-                      name="amount" 
-                      type="number" 
-                      autoComplete="off" 
-                      placeholder="€"
-                    />
-                  </div>
-                </div>
+            )}
+          </div>
+          <div className="footer-list">
+            <div className="alert">{/* message */}</div>
+            <div className="row">
+              <div className="input-product">
+                <input
+                  className="form-control form-control-sm"
+                  name="product" 
+                  type="text" 
+                  autoComplete="off" 
+                  value={this.state.product} 
+                  onChange={this.handleChange} 
+                  onKeyDown={this.handleKey} 
+                  placeholder={this.state.selectedCatgName || 'Select a category'} 
+                  // ref={this.textInput}
+                />
+              </div>
+              <div className="add">
+                <input 
+                  className="btn btn-sm btn-secondary"
+                  type="submit" 
+                  name="add" 
+                  value="Add" 
+                  onClick={this.handleAddProduct} 
+                />
               </div>
             </div>
-        }
+            {/* <div className="row buttons">
+              <div className="col col-3 col-sm-3">
+                <button className="btn btn-sm btn-secondary undo" 
+                  disabled={this.state.inTrash.length == 0}
+                  onClick={this.handleUndo}>Undo
+                </button>
+              </div>
+              <div className="col col-5 col-sm-5">
+                <button className="btn btn-sm btn-warning pay" onClick={this.handlePay}>Pay</button>
+              </div>
+              <div className="col col-3 col-sm-3">
+                <input id="amount"
+                  className="form-control form-control-sm amount"
+                  name="amount" 
+                  type="number" 
+                  autoComplete="off" 
+                  placeholder="€"
+                />
+              </div>
+            </div> */}
+          </div>
+        </div>
       </div>  
     )
   }
