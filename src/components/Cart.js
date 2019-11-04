@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import $ from 'jquery'; 
 
 import trash from '../images/trash.png';
+import hideMenu from '../images/up-arrow.png'
+import showMenu from '../images/down-arrow.png'
 
 class Cart extends Component {
   constructor(props) {
@@ -22,10 +24,12 @@ class Cart extends Component {
       inTrash: [],
       clickTwice: false,
       focus: false,
+      menu: false,
       loading: true,
       error: false,
     };
     this.textInput = React.createRef();
+    this.amountInput = React.createRef();
   }
 
   componentDidMount() {
@@ -265,7 +269,32 @@ class Cart extends Component {
     });
   }
 
-  handlePay = () => {
+  handleAlert = (message) => {
+    if(message) {
+        $('.alert').text(message).slideUp(100).fadeIn(200);
+    } else {
+        $('.alert').css('display', 'none');
+        $('.alert').text(message);
+    }
+  }
+
+  handleMenu = () => {
+    this.setState((prevState) => 
+      ({menu: !prevState.menu}), () => {
+        document.getElementById('menu').style.display = this.state.menu ? 'flex' : 'none';
+      })
+  }
+
+  handleModal = (bool) => {
+    if(bool) {
+      document.getElementById('modal').style.display = 'flex';
+      this.amountInput.current.focus();
+    } else {
+      document.getElementById('modal').style.display = 'none';
+    }
+  }
+
+  handlePay = (e) => {
     const [amount, list, listId] = [
       document.getElementById('amount').value, 
       this.state.list,
@@ -282,18 +311,13 @@ class Cart extends Component {
     if(amount > 0 && listId !== null && nbChecked > 0) {
       document.getElementById('amount').style.backgroundColor = 'white';
       this.closeList(amount);
-    } else {
-      document.getElementById('amount').style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
-    }
-    document.getElementById('amount').value = "";
-  }
-
-  handleAlert = (message) => {
-    if(message) {
-        $('.alert').text(message).slideUp(100).fadeIn(200);
-    } else {
-        $('.alert').css('display', 'none');
-        $('.alert').text(message);
+    } else if (amount == 0) {
+      document.getElementById('modal').style.display = 'none';
+      this.handleAlert('Please insert an amount');
+      document.getElementById('amount').value = "";
+    } else if (nbChecked == 0) {
+      document.getElementById('modal').style.display = 'none';
+      this.handleAlert('Please select some products')
     }
   }
 
@@ -303,7 +327,7 @@ class Cart extends Component {
 
     const isSelect = this.state.selectedCatgId;
     const styleTaunt = {textDecorationLine: 'line-through'};
-    
+
     return (
       <div className="cart" style={styleLoad}>
         <h4 className="title">Shopping List</h4>
@@ -313,6 +337,7 @@ class Cart extends Component {
             {this.state.categories.map(
               (c, index) => 
               <div key={index} className="c-block">
+                <hr/>
                 <div className={isSelect === c.id ? "c-list-hover" : "c-list"}>
                     <span className="c-name" onClick={this.handleClickCategory.bind(null, index)}>{c.name}</span>
                     { isSelect === c.id 
@@ -323,40 +348,40 @@ class Cart extends Component {
                   (p, index) => 
                     p.idcategory === c.id 
                     ? 
-                      <div key={index} className={isSelect === c.id? "p-list row pb-2" : "p-list row"}>
-                        <div className="col col-11 col-sm-11">
-                          <label className="p-list-name">
-                            <input className="check" 
-                              type="checkbox" 
-                              checked={p.checked || false} 
-                              value={index} 
-                              onChange={this.handleCheck} 
-                            />
-                            <span style={p.checked ? styleTaunt : {}}>{p.name}</span> 
-                          </label>
-                        </div>
-                        {
-                          isSelect === c.id 
-                          ?
-                          <div className="col col-1 col-sm-1">
-                            <label className="p-list-trash">
-                                <img className="p-trash" src={trash} alt="trash" /> 
-                                <input hidden 
-                                    className="form-check"
-                                    type="checkbox" 
-                                    value={index} 
-                                    onChange={this.handleTrash} 
-                                />
-                            </label>
-                          </div> 
-                          : false
-                        }
+                    <div key={index} className={isSelect === c.id? "p-list row pb-2" : "p-list row"}>
+                      <div className="col col-11 col-sm-11">
+                        <label className="p-list-name">
+                          <input className="check" 
+                            type="checkbox" 
+                            checked={p.checked || false} 
+                            value={index} 
+                            onChange={this.handleCheck} 
+                          />
+                          <span style={p.checked ? styleTaunt : {}}>{p.name}</span> 
+                        </label>
                       </div>
+                      { isSelect === c.id 
+                        ?
+                        <div className="col col-1 col-sm-1">
+                          <label className="p-list-trash">
+                              <img className="p-trash" src={trash} alt="trash" /> 
+                              <input hidden 
+                                  className="form-check"
+                                  type="checkbox" 
+                                  value={index} 
+                                  onChange={this.handleTrash} 
+                              />
+                          </label>
+                        </div> 
+                        : false
+                      }
+                    </div>
                     : false
                   )}
               </div>
             )}
           </div>
+
           <div className="footer-list">
             <div className="alert">{/* message */}</div>
             <div className="row">
@@ -382,27 +407,47 @@ class Cart extends Component {
                   onClick={this.handleAddProduct} 
                 />
               </div>
-            </div>
-            {/* <div className="row buttons">
-              <div className="col col-3 col-sm-3">
-                <button className="btn btn-sm btn-secondary undo" 
-                  disabled={this.state.inTrash.length == 0}
-                  onClick={this.handleUndo}>Undo
+              <div className="btn-menu">
+                <button className="btn btn-sm btn-secondary" onClick={this.handleMenu}>
+                  { this.state.menu 
+                  ? <img src={showMenu} className="img-menu" alt="menu" />
+                  : <img src={hideMenu} className="img-menu" alt="menu" />
+                  }
                 </button>
               </div>
-              <div className="col col-5 col-sm-5">
-                <button className="btn btn-sm btn-warning pay" onClick={this.handlePay}>Pay</button>
+            </div>
+
+            <div className="row menu" id="menu">
+              <div className="undo">
+                <button className="btn btn-sm btn-secondary" 
+                  disabled={this.state.inTrash.length == 0} onClick={this.handleUndo}>Undo
+                </button>
               </div>
-              <div className="col col-3 col-sm-3">
+              <div className="pay">
+                <button className="btn btn-sm btn-warning" onClick={this.handleModal.bind(null, true)}>Pay</button>
+              </div>
+            </div>
+
+            <div className="modal" id="modal">
+              <div className="modal-body">
                 <input id="amount"
                   className="form-control form-control-sm amount"
                   name="amount" 
                   type="number" 
                   autoComplete="off" 
-                  placeholder="€"
+                  placeholder="€" 
+                  ref={this.amountInput}
                 />
+                <div className="row amout-valid">
+                  <div className="undo">
+                    <button className="btn btn-sm btn-info" onClick={this.handleModal.bind(null, false)}>Cancel</button>
+                  </div>
+                  <div className="pay">
+                    <button className="btn btn-sm btn-danger" onClick={this.handlePay}>Ok</button>
+                  </div>
+                </div>
               </div>
-            </div> */}
+            </div>
           </div>
         </div>
       </div>  
