@@ -3,11 +3,14 @@ import React, { Component } from 'react';
 import { instanceOf } from 'prop-types';
 import { withCookies, Cookies } from 'react-cookie';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
+import AddToHomescreen from 'react-add-to-homescreen';
 
 import Login from './components/LoginForm';
 import Nav from './components/Nav';
 import Home from './components/Home';
 import Cart from './components/Cart';
+import Todos from './components/Todos';
+import Todo from './components/Todo';
 import Wallet from './components/Wallet';
 
 class App extends Component {
@@ -97,6 +100,12 @@ class App extends Component {
     });
   }
 
+  handleAddToHomescreenClick = () => {
+    alert(`
+    1. Open Share menu
+    2. Tap on "Add to Home Screen" button`);
+  }
+
   render() {
     const height = this.state.isLogged ? {height: '100vh'} : {height: '0'};
     
@@ -107,10 +116,13 @@ class App extends Component {
           <div className="app container container-fluid" style={height}>
             <Nav logout={this.handleLogout} username={this.state.username}/>
             <Switch>
-              <Route path="/" exact component={Home} />
+              <Home path="/" exact component={Home} />
               <Cart path="/cart" component={Cart} state={this.state} />
+              <Todos path="/todos" component={Todos} state={this.state} />
+              <Route path="/todo/:id" component={Todo} state={this.state} />
               <Wallet path="/wallet" component={Wallet} />
             </Switch>
+            <AddToHomescreen onAddToHomescreenClick={this.handleAddToHomescreenClick} />
           </div>
         :
           <div className="app container container-fluid">

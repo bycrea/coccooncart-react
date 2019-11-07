@@ -33,8 +33,7 @@ class Cart extends Component {
   }
 
   componentDidMount() {
-    
-    fetch(this.state.urlApi + '/api/getlist', {
+    fetch(this.state.urlApi + '/cart/getlist', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -50,8 +49,6 @@ class Cart extends Component {
           list: result.list || [],
           categories: result.categories,
           modify: result.modify,
-          //selectedCatgId: parseInt(result.categories[0].id),
-          //selectedCatgName: result.categories[0].name,
           loading: false,
           error: false
         });
@@ -82,8 +79,7 @@ class Cart extends Component {
   }
 
   updateProduct(product, action = 'add') {
-    
-    fetch(this.state.urlApi + '/api/updateProduct', {
+    fetch(this.state.urlApi + '/cart/updateProduct', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -124,7 +120,7 @@ class Cart extends Component {
 
   closeList(amount) {
     this.setState({ loading: true });
-    fetch(this.state.urlApi + '/api/closelist', {
+    fetch(this.state.urlApi + '/cart/closelist', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -311,11 +307,11 @@ class Cart extends Component {
     if(amount > 0 && listId !== null && nbChecked > 0) {
       document.getElementById('amount').style.backgroundColor = 'white';
       this.closeList(amount);
-    } else if (amount == 0) {
+    } else if (amount === 0) {
       document.getElementById('modal').style.display = 'none';
       this.handleAlert('Please insert an amount');
       document.getElementById('amount').value = "";
-    } else if (nbChecked == 0) {
+    } else if (nbChecked === 0) {
       document.getElementById('modal').style.display = 'none';
       this.handleAlert('Please select some products')
     }
@@ -334,17 +330,18 @@ class Cart extends Component {
         <p className="modify">{this.state.loading ? 'loading' : connexion}</p>
         <div className="list-container">
           <div className="list">
-            {this.state.categories.map(
+            { this.state.categories.map(
               (c, index) => 
               <div key={index} className="c-block">
                 <hr/>
                 <div className={isSelect === c.id ? "c-list-hover" : "c-list"}>
                     <span className="c-name" onClick={this.handleClickCategory.bind(null, index)}>{c.name}</span>
                     { isSelect === c.id 
-                    ? <span className="plus" onClick={this.handleClickPlus.bind(null, index)}>+</span> 
-                    : <span className="plus" onClick={this.handleClickPlus.bind(null, index)}>&nbsp;</span> }
+                      ? <span className="plus" onClick={this.handleClickPlus.bind(null, index)}>+</span> 
+                      : <span className="plus" onClick={this.handleClickPlus.bind(null, index)}>&nbsp;</span> 
+                    }
                 </div>
-                {this.state.list.map(
+                { this.state.list.map(
                   (p, index) => 
                     p.idcategory === c.id 
                     ? 
@@ -398,7 +395,7 @@ class Cart extends Component {
                   ref={this.textInput}
                 />
               </div>
-              <div className="add">
+              <div className="add-product">
                 <input 
                   className="btn btn-sm btn-secondary"
                   type="submit" 
@@ -410,8 +407,8 @@ class Cart extends Component {
               <div className="btn-menu">
                 <button className="btn btn-sm btn-secondary" onClick={this.handleMenu}>
                   { this.state.menu 
-                  ? <img src={showMenu} className="img-menu" alt="menu" />
-                  : <img src={hideMenu} className="img-menu" alt="menu" />
+                    ? <img src={showMenu} className="img-menu" alt="menu" />
+                    : <img src={hideMenu} className="img-menu" alt="menu" />
                   }
                 </button>
               </div>
@@ -420,7 +417,7 @@ class Cart extends Component {
             <div className="row menu" id="menu">
               <div className="undo">
                 <button className="btn btn-sm btn-secondary" 
-                  disabled={this.state.inTrash.length == 0} onClick={this.handleUndo}>Undo
+                  disabled={this.state.inTrash.length === 0} onClick={this.handleUndo}>Undo
                 </button>
               </div>
               <div className="pay">

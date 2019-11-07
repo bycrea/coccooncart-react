@@ -38,6 +38,14 @@ body {
     color: #4c5361;
 }
 
+a {
+    color: antiquewhite;
+    text-decoration: none;
+}
+
+a:hover {
+    color: antiquewhite;
+}
 
 .home-page {
     display: flex;

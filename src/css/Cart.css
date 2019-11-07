@@ -48,6 +48,7 @@
 .c-name {
     width: 80%;
     padding: 2px 10px 3px 10px;
+    color: black;
 }
 
 .plus {
@@ -117,7 +118,7 @@
     padding: 2px;
 }
 
-.add {
+.add-product {
     width: 25%;
     padding: 2px;
 }
