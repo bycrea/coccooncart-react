@@ -1,6 +1,6 @@
 {
   "short_name": "CoccoonCart",
-  "name": "CoccoonCart App ReactJs",
+  "name": "CoccoonCart App",
   "icons": [
     {
       "src": "favicon.ico",
@@ -18,7 +18,7 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": "/",
+  "start_url": "/login",
   "version": "1.0",
   "display": "standalone",
   "theme_color": "#000000",
