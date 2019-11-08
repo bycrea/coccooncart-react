@@ -6,12 +6,15 @@ import './css/Wel-Log-Nav.css';
 
 import React from 'react';
 import App from './App';
+import HttpsRedirect from 'react-https-redirect';
 import { CookiesProvider } from 'react-cookie';
  
 export default function Root() {
   return (
     <CookiesProvider>
-      <App />
+      <HttpsRedirect>
+        <App />
+      </HttpsRedirect>
     </CookiesProvider>
   );
 }
