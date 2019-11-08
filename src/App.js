@@ -25,9 +25,8 @@ class App extends Component {
       error: false,
       username: "",
       token: "",
-      urlApi: 'https://api.bycrea.me'
-      //urlApi: 'http://coccoon-api.com'
-      //urlApi: process.env.API_URL
+      //urlApi: 'https://api.bycrea.me'
+      urlApi: process.env.REACT_APP_API_URL
     };
   }
 
