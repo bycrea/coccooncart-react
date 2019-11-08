@@ -3,7 +3,6 @@ import React, { Component } from 'react';
 import { instanceOf } from 'prop-types';
 import { withCookies, Cookies } from 'react-cookie';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
-import AddToHomescreen from 'react-add-to-homescreen';
 
 import Login from './components/LoginForm';
 import Nav from './components/Nav';
@@ -100,12 +99,6 @@ class App extends Component {
     });
   }
 
-  handleAddToHomescreenClick = () => {
-    alert(`
-    1. Open Share menu
-    2. Tap on "Add to Home Screen" button`);
-  }
-
   render() {
     const height = this.state.isLogged ? {height: '100vh'} : {height: '0'};
     
@@ -122,7 +115,6 @@ class App extends Component {
               <Route path="/todo/:id" component={Todo} state={this.state} />
               <Wallet path="/wallet" component={Wallet} />
             </Switch>
-            <AddToHomescreen onAddToHomescreenClick={this.handleAddToHomescreenClick} />
           </div>
         :
           <div className="app container container-fluid">
