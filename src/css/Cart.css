@@ -93,12 +93,12 @@
     opacity: 0.8;
 }
 
-.p-list span {
-    user-select: none;
-}
+/* .p-list span {
+   
+} */
 
 .p-trash {
-    width: 1.2em;
+    width: 1.1em;
     margin: auto;
     user-select: none;
 }
@@ -143,14 +143,20 @@
     justify-content: space-around;
 }
 
+.filter {
+    width: 15%;
+    padding: 2px;
+    color: white;
+}
+
 .undo {
-    width: 50%;
+    width: 40%;
     padding: 2px;
     color: white;
 }
 
 .pay {
-    width: 50%;
+    width: 45%;
     padding: 2px;
     font-weight: bolder;
     text-shadow: 0px 0px 2px darkslategray;
@@ -176,4 +182,9 @@
 .amount {
     width: 100%;
     margin: 10px 0px;
+}
+
+.amount-valid  {
+    display: flex;
+    justify-content: center;
 }

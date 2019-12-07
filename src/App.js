@@ -25,8 +25,9 @@ class App extends Component {
       error: false,
       username: "",
       token: "",
-      //urlApi: 'https://api.bycrea.me'
-      urlApi: process.env.REACT_APP_API_URL
+      urlApi: process.env.REACT_APP_API_URL,
+      orderOptions: ["a-Z", "Z-a", "Def", "Inv"],
+      isOnline: true
     };
   }
 
@@ -43,6 +44,16 @@ class App extends Component {
     }
   }
 
+  componentDidUpdate() {
+    const isOnline = navigator.onLine;
+    if(isOnline !== this.state.isOnline) {
+      this.setState({
+        isOnline: isOnline
+      });
+    }
+    console.log(isOnline)
+  }
+
   parseJwt (token) {
     var base64Url = token.split('.')[1];
     var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -56,7 +67,7 @@ class App extends Component {
   handleLogin = (user, pass) => {
     if(user === "" || pass === "")
       return false;
-
+      
     const { cookies } = this.props;
     fetch(this.state.urlApi + '/api/login_check', {
       method: 'POST',
@@ -71,12 +82,13 @@ class App extends Component {
             error: true,
           });
         } else {
+          //console.log(this.parseJwt(result.token))
           cookies.set('coccooncookie', result.token, { path: '/' });
           this.setState({
             isLogged: true,
             username: this.parseJwt(result.token).username,
             token: result.token
-          });
+          }, /*() => window.location = '/'*/);
         }
       },
       (error) => {
@@ -99,6 +111,35 @@ class App extends Component {
     });
   }
 
+  // getAllData() {
+  //   fetch(this.state.urlApi + '/api/getuserdata', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Accept': 'application/json',
+  //       'Authorization': 'Bearer ' + token
+  //     },
+  //     body: JSON.stringify({ username: this.parseJwt(token).username })
+  //   })
+  //   .then(res => res.json())
+  //   .then((result) => {
+  //     //console.log(result);
+  //     if(!result.error && result.options) {
+  //       this.setState({
+  //         orderBy: result.options.orderBy,
+  //         error: false,
+  //       });
+  //     }
+  //   }, (error) => {
+  //       this.setState({
+  //         error: true,
+  //         loading: false
+  //       });
+  //       console.log(error)
+  //     }
+  //   )
+  // }
+
+
   render() {
     const height = this.state.isLogged ? {height: '100vh'} : {height: '0'};
     
@@ -112,6 +153,7 @@ class App extends Component {
               <Home path="/" exact component={Home} />
               <Cart path="/cart" component={Cart} state={this.state} />
               <Todos path="/todos" component={Todos} state={this.state} />
+              <Todo path="/todo" component={Todos} state={this.state} />
               <Route path="/todo/:id" component={Todo} state={this.state} />
               <Wallet path="/wallet" component={Wallet} />
             </Switch>

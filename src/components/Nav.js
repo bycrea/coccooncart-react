@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
+
 import exit from '../images/sign-out-option.png'
 
 class Nav extends Component {

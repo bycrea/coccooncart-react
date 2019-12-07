@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Alert from './Alert'
 import $ from 'jquery'; 
 
 import trash from '../images/trash.png';
@@ -10,13 +11,17 @@ class Cart extends Component {
     super(props);
 
     this.state = {
-      isLogged: this.props.state.isLogged,
-      username: this.props.state.username,
-      token: this.props.state.token,
-      urlApi: this.props.state.urlApi,
+      app: {
+        isLogged: this.props.state.isLogged,
+        username: this.props.state.username,
+        token: this.props.state.token,
+        urlApi: this.props.state.urlApi,
+        orderOptions: this.props.state.orderOptions,
+      },
       listId: null,
       list: [],
       categories: [],
+      orderBy: "Def",
       product: "",
       modify: "",
       selectedCatgId: null,
@@ -33,12 +38,26 @@ class Cart extends Component {
   }
 
   componentDidMount() {
-    fetch(this.state.urlApi + '/cart/getlist', {
+    this.getList()
+  }
+
+  componentDidUpdate() {
+    Alert("");
+    if($('.input-product input').is(':focus') && !this.state.focus) {
+      this.setState({
+        focus: true,
+      });
+    }
+  }
+
+  getList(orderBy = null) {
+    fetch(this.state.app.urlApi + '/cart/getlist', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
-        'Authorization': 'Bearer ' + this.state.token
-      }
+        'Authorization': 'Bearer ' + this.state.app.token
+      },
+      body: JSON.stringify({ orderBy: orderBy })
     })
     .then(res => res.json())
     .then((result) => {
@@ -48,6 +67,7 @@ class Cart extends Component {
           listId: result.listId,
           list: result.list || [],
           categories: result.categories,
+          orderBy: result.orderBy,
           modify: result.modify,
           loading: false,
           error: false
@@ -69,62 +89,52 @@ class Cart extends Component {
     )
   }
 
-  componentDidUpdate() {
-      this.handleAlert("");
-      if($('.input-product input').is(':focus') && !this.state.focus) {
-        this.setState({
-            focus: true
-        });
-      }
-  }
-
   updateProduct(product, action = 'add') {
-    fetch(this.state.urlApi + '/cart/updateProduct', {
+    fetch(this.state.app.urlApi + '/cart/updateproduct', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
-        'Authorization': 'Bearer ' + this.state.token
+        'Authorization': 'Bearer ' + this.state.app.token
       },
       body: JSON.stringify({
         listId: this.state.listId, 
         product: product,
         action: action
       })
-     })
-      .then(res => res.json())
-      .then((result) => {
-        //console.log(result)
-        if(result.error === false) {
-          this.setState({
-            loading: false,
-            list: result.list,
-            listId: result.listId,
-            modify: result.modify,
-            error: false
-          });
-        } else {
-          this.setState({
-            error: true,
-            loading: false
-          });
-        }
-      }, (error) => {
-        console.log(error)
+      })
+    .then(res => res.json())
+    .then((result) => {
+      //console.log(result)
+      if(result.error === false) {
+        this.setState({
+          loading: false,
+          list: result.list,
+          listId: result.listId,
+          modify: result.modify,
+          error: false
+        });
+      } else {
         this.setState({
           error: true,
           loading: false
         });
       }
-    )
+    }, (error) => {
+      console.log(error)
+      this.setState({
+        error: true,
+        loading: false
+      });
+    });
   }
 
   closeList(amount) {
     this.setState({ loading: true });
-    fetch(this.state.urlApi + '/cart/closelist', {
+    fetch(this.state.app.urlApi + '/cart/closelist', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
-        'Authorization': 'Bearer ' + this.state.token
+        'Authorization': 'Bearer ' + this.state.app.token
       },
       body: JSON.stringify({
         listId: this.state.listId, 
@@ -165,9 +175,9 @@ class Cart extends Component {
       this.textInput.current.focus();
       // $('.input-product input').focus();
     } else if (!this.state.selectedCatgId) {
-        this.handleAlert("please select a category");
+        Alert("please select a category");
     } else if (this.state.product.replace(/\s+/g, "") === "") {
-        this.handleAlert("please fill a product name");
+        Alert("please fill a product name");
         this.textInput.current.focus();
         // $('.input-product input').focus();
     }
@@ -199,6 +209,7 @@ class Cart extends Component {
     const [index, list] = [e.target.value, this.state.list];
     const addToTrash = list[index];
     list.splice(index, 1);
+    
     this.setState((prevState) => ({
       list: list,
       inTrash: [addToTrash].concat(prevState.inTrash),
@@ -218,6 +229,14 @@ class Cart extends Component {
         loading: true
       }, this.updateProduct(fromTrash));
     }
+  }
+
+  handleOrder = (e) => {    
+    const [app, value] = [this.state.app, e.target.value];
+    let index = app.orderOptions.indexOf(value);
+    index++;
+    if(index === app.orderOptions.length) { index = 0; }
+    this.getList(app.orderOptions[index]);
   }
 
   handleClickCategory = (index) => {
@@ -265,15 +284,6 @@ class Cart extends Component {
     });
   }
 
-  handleAlert = (message) => {
-    if(message) {
-        $('.alert').text(message).slideUp(100).fadeIn(200);
-    } else {
-        $('.alert').css('display', 'none');
-        $('.alert').text(message);
-    }
-  }
-
   handleMenu = () => {
     this.setState((prevState) => 
       ({menu: !prevState.menu}), () => {
@@ -309,11 +319,11 @@ class Cart extends Component {
       this.closeList(amount);
     } else if (amount === 0) {
       document.getElementById('modal').style.display = 'none';
-      this.handleAlert('Please insert an amount');
+      Alert('Please insert an amount');
       document.getElementById('amount').value = "";
     } else if (nbChecked === 0) {
       document.getElementById('modal').style.display = 'none';
-      this.handleAlert('Please select some products')
+      Alert('Please select some products')
     }
   }
 
@@ -347,15 +357,18 @@ class Cart extends Component {
                     ? 
                     <div key={index} className={isSelect === c.id? "p-list row pb-2" : "p-list row"}>
                       <div className="col col-11 col-sm-11">
-                        <label className="p-list-name">
-                          <input className="check" 
-                            type="checkbox" 
-                            checked={p.checked || false} 
-                            value={index} 
-                            onChange={this.handleCheck} 
-                          />
-                          <span style={p.checked ? styleTaunt : {}}>{p.name}</span> 
-                        </label>
+                        { c.id !== 13 
+                        ? <label className="p-list-name">
+                            <input className="check" 
+                              type="checkbox" 
+                              checked={p.checked || false} 
+                              value={index} 
+                              onChange={this.handleCheck} 
+                            />
+                            <span style={p.checked ? styleTaunt : {}}>{p.name}</span> 
+                          </label>
+                        : <span>{p.name}</span> 
+                        }
                       </div>
                       { isSelect === c.id 
                         ?
@@ -380,6 +393,7 @@ class Cart extends Component {
           </div>
 
           <div className="footer-list">
+            
             <div className="alert">{/* message */}</div>
             <div className="row">
               <div className="input-product">
@@ -415,6 +429,13 @@ class Cart extends Component {
             </div>
 
             <div className="row menu" id="menu">
+              <div className="filter">
+                <input type="button" 
+                  className="btn btn-sm btn-secondary" 
+                  onClick={this.handleOrder} 
+                  value={this.state.orderBy}
+                />
+              </div>
               <div className="undo">
                 <button className="btn btn-sm btn-secondary" 
                   disabled={this.state.inTrash.length === 0} onClick={this.handleUndo}>Undo
@@ -435,7 +456,7 @@ class Cart extends Component {
                   placeholder="€" 
                   ref={this.amountInput}
                 />
-                <div className="row amout-valid">
+                <div className="row amount-valid">
                   <div className="undo">
                     <button className="btn btn-sm btn-info" onClick={this.handleModal.bind(null, false)}>Cancel</button>
                   </div>
@@ -444,7 +465,9 @@ class Cart extends Component {
                   </div>
                 </div>
               </div>
+              
             </div>
+            
           </div>
         </div>
       </div>  

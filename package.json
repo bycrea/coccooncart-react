@@ -4,9 +4,12 @@
   "private": true,
   "homepage": "https://coccoon.bycrea.me/",
   "dependencies": {
+    "i": "^0.3.6",
     "jquery": "^3.4.1",
+    "npm": "^6.13.0",
     "react": "^16.10.1",
     "react-cookie": "^4.0.1",
+    "react-detect-offline": "^2.4.0",
     "react-dom": "^16.10.1",
     "react-https-redirect": "^1.1.0",
     "react-router-dom": "^5.1.2",

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import Todo from '../components/Todo';
-import $ from 'jquery';
+import { Link } from 'react-router-dom';
+import Alert from './Alert'
 
 import trash from '../images/trash.png';
 import tick from '../images/play.png'
@@ -11,19 +11,18 @@ class Todos extends Component {
     super(props);
 
     this.state = {
-      isLogged: this.props.state.isLogged,
-      username: this.props.state.username,
-      token: this.props.state.token,
-      urlApi: this.props.state.urlApi,
+      app: {
+        isLogged: this.props.state.isLogged,
+        username: this.props.state.username,
+        token: this.props.state.token,
+        urlApi: this.props.state.urlApi
+      },
       todoId: null,
       todos: [],
       dates: [],
       libelle: "",
-      modify: "",
       tick: null,
-      inTrash: [],
-      focus: false,
-      menu: false,
+      deleteId: null,
       loading: true,
       error: false,
     };
@@ -31,31 +30,18 @@ class Todos extends Component {
   }
 
   componentDidMount() {
-    fetch(this.state.urlApi + '/todo/getall', {
+    fetch(this.state.app.urlApi + '/todo/getall', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
-        'Authorization': 'Bearer ' + this.state.token
+        'Authorization': 'Bearer ' + this.state.app.token
       }
     })
     .then(res => res.json())
     .then((result) => {
-      console.log(result);
+      //console.log(result);
       if(result.error === false) {
-        let dates = [];
-        for (let [i, e] of Object.entries(result.todos)) {
-          if(!dates.includes(e.date)) {
-            dates[i] = e.date;
-          } else {
-            dates[i] = "";
-          }
-        }
-        this.setState({
-          todos: result.todos || [],
-          dates: dates,
-          error: false,
-          loading: false,
-        });
+        this.handleFetchResult(result.todos);
         console.log('success')
       } else {
         this.setState({
@@ -74,107 +60,140 @@ class Todos extends Component {
   }
 
   componentDidUpdate() {
-      this.handleAlert("");
-      if($('.input-product input').is(':focus') && !this.state.focus) {
-        this.setState({
-            focus: true
-        });
-      }
+    Alert("");
   }
 
-  // updateProduct(product, action = 'add') {
-  //   fetch(this.state.urlApi + '/cart/updateProduct', {
-  //     method: 'POST',
-  //     headers: {
-  //       'Accept': 'application/json',
-  //       'Authorization': 'Bearer ' + this.state.token
-  //     },
-  //     body: JSON.stringify({
-  //       listId: this.state.listId, 
-  //       product: product,
-  //       action: action
-  //     })
-  //    })
-  //     .then(res => res.json())
-  //     .then((result) => {
-  //       //console.log(result)
-  //       if(result.error === false) {
-  //         this.setState({
-  //           loading: false,
-  //           list: result.list,
-  //           listId: result.listId,
-  //           modify: result.modify,
-  //           error: false
-  //         });
-  //       } else {
-  //         this.setState({
-  //           error: true,
-  //           loading: false
-  //         });
-  //       }
-  //     }, (error) => {
-  //       console.log(error)
-  //       this.setState({
-  //         error: true,
-  //         loading: false
-  //       });
-  //     }
-  //   )
-  // }
+  handleFetchResult = (newTodos) => {
+    let dates = [];
+    newTodos.map((todo, index) => {
+      if(!dates.includes(todo.date)) {
+        dates[index] = todo.date;
+      } else {
+        dates[index] = "";
+      }
+      return true;
+    });
+    
+    this.setState({
+      libelle: "",
+      deleteId: null,
+      todos: newTodos,
+      dates: dates,
+      error: false,
+      loading: false
+    });
+  }
 
-  // closeList(amount) {
-  //   this.setState({ loading: true });
-  //   fetch(this.state.urlApi + '/cart/closelist', {
-  //     method: 'POST',
-  //     headers: {
-  //       'Accept': 'application/json',
-  //       'Authorization': 'Bearer ' + this.state.token
-  //     },
-  //     body: JSON.stringify({
-  //       listId: this.state.listId, 
-  //       list: this.state.list, 
-  //       amount: amount
-  //     })
-  //    })
-  //     .then(res => res.json())
-  //     .then((result) => {
-  //       //console.log(result)
-  //       if(result.error !== true) {
-  //         if(result.newListId !== null) {
-  //           window.location = '/cart';
-  //         } else {
-  //           window.location = '/wallet';
-  //         }
-  //       }
-  //     }, (error) => {
-  //       console.log(error)
-  //       this.setState({
-  //         error: true,
-  //         loading: false
-  //       });
-  //     }
-  //   )
-  // }
-
-  handleNewLibelle = () => {
-    if(this.state.product.replace(/\s+/g, "") !== "" && this.state.selectedCatgId)
+  createNewTodo = () => {
+    const libelle = this.state.libelle;
+    if(libelle.replace(/\s+/g, "") !== "")
     {
-      const addProduct = {name: this.state.product, idcategory: this.state.selectedCatgId}
-      const newList = [addProduct].concat(this.state.list);
-      this.setState({
-        product: "",
-        list: newList,
-        loading: true
-      }, this.updateProduct(addProduct));
-      this.textInput.current.focus();
-      // $('.input-product input').focus();
-    } else if (!this.state.selectedCatgId) {
-        this.handleAlert("please select a category");
-    } else if (this.state.product.replace(/\s+/g, "") === "") {
-        this.handleAlert("please fill a product name");
+      this.setState({loading: true}, () => {
+        fetch(this.state.app.urlApi + '/todo/newtodo', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer ' + this.state.app.token
+          },
+          body: JSON.stringify({libelle: libelle})
+         })
+          .then(res => res.json())
+          .then((result) => {
+            if(result.error === false) {
+              //console.log(result)
+              const newTodos = [result.todo].concat(this.state.todos)
+              this.handleFetchResult(newTodos);
+            } else {
+              this.setState({
+                error: true,
+                loading: false,
+              });
+            }
+          }, (error) => {
+            console.log(error)
+            this.setState({
+              error: true,
+              loading: false
+            });
+          }
+        )
+      });
+    } else {
+        Alert("please fill a name for your to do list");
         this.textInput.current.focus();
-        // $('.input-product input').focus();
     }
+  }
+
+  deleteTodo = (id) => {
+    fetch(this.state.app.urlApi + '/todo/deletetodo', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ' + this.state.app.token
+      },
+      body: JSON.stringify({id: id})
+    })
+      .then(res => res.json())
+      .then((result) => {
+        //console.log(result)
+        if(result.error === false) {
+          this.setState({
+            loading: false,
+            error: false
+          });
+        } else {
+          this.setState({
+            error: true,
+            loading: false
+          });
+        }
+      }, (error) => {
+        console.log(error)
+        this.setState({
+          error: true,
+          loading: false
+        });
+      }
+    )
+  }
+
+  updateList = (todoId, list) => {
+    fetch(this.state.app.urlApi + '/todo/updatelist', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ' + this.state.app.token
+      },
+      body: JSON.stringify({todoId: todoId, list: list})
+    })
+      .then(res => res.json())
+      .then((result) => {
+        //console.log(result)
+        if(result.error === false) {
+          let newTodos = this.state.todos;
+          newTodos.map((todo) => {
+            if(todo.id === todoId) {
+              todo.date = result.todo.date;
+              todo.hour = result.todo.hour;
+              todo.closed = result.todo.closed;
+            };
+            return true;
+          });
+          this.handleFetchResult(newTodos);
+        } else {
+          this.setState({
+            error: true,
+            loading: false
+          });
+        }
+      }, (error) => {
+        console.log(error)
+        this.setState({
+          error: true,
+          loading: false
+        });
+      }
+    )
   }
 
   handleChange = (e) => {
@@ -186,165 +205,189 @@ class Todos extends Component {
 
   handleKey = (e) => {
     if (e.key === 'Enter') {
-      this.handleAddProduct();
+      this.createNewTodo();
     }
   }
 
-  handleCheck = (e) => {
-    console.log(e.target.value)
-  }
-
-  handleId = (id) => {
-    this.setState({
-      loading: true
+  handleCheck = (todoId, lineIndex) => {
+    let newTodos = this.state.todos;
+    let newList;
+    newTodos.map((todo) => {
+      if(todo.id === todoId) {
+        todo.list[lineIndex].checked = !todo.list[lineIndex].checked;
+        todo.date = "";
+        todo.hour = '--:--';
+        newList = todo.list;
+      };
+      return true;
     });
+    
+    this.setState({
+      todos: newTodos
+    }, this.updateList(todoId, newList));
   }
 
-  handleTrash = (e) => {
-    const [index, list] = [e.target.value, this.state.list];
-    const addToTrash = list[index];
-    list.splice(index, 1);
-    this.setState((prevState) => ({
-      list: list,
-      inTrash: [addToTrash].concat(prevState.inTrash),
-      loading: true
-    }), this.updateProduct(index, 'delete'));
-  }
+  handleTrash = () => {
+    const [newTodos, deleteId] = [
+      this.state.todos, 
+      this.state.deleteId
+    ];
 
-  handleUndo = () => {
-    if(this.state.inTrash.length > 0) 
-    { 
-      const [fromTrash, trash, list] = [this.state.inTrash[0], this.state.inTrash, this.state.list];
-      trash.splice(0, 1);
-      const newList = [fromTrash].concat(list);
-      this.setState({
-        list: newList,
-        inTrash: trash,
-        loading: true
-      }, this.updateProduct(fromTrash));
+    if(deleteId !== null)
+    {
+      newTodos.map((todo, index) => {
+        if(todo.id === deleteId) {
+          newTodos.splice(index, 1);
+        }
+        return true;
+      });
     }
-  }
-
-  handleAlert = (message) => {
-    if(message) {
-        $('.alert').text(message).slideUp(100).fadeIn(200);
-    } else {
-        $('.alert').css('display', 'none');
-        $('.alert').text(message);
-    }
-  }
-
-  handleMenu = () => {
-    this.setState((prevState) => 
-      ({menu: !prevState.menu}), () => {
-        document.getElementById('menu').style.display = this.state.menu ? 'flex' : 'none';
-      })
+    
+    this.deleteTodo(deleteId);
+    this.handleFetchResult(newTodos);
+    document.getElementById('modal').style.display = 'none';
   }
 
   handleTick = (id) => {
-    const tick = this.state.tick;
     this.setState({
-      tick: tick === id ? null : id
+      tick: this.state.tick === id ? null : id
     })
   }
 
-  handleTodo = (todo) => {
-    this.setState({
-      todoId: todo
-    });
+  handleModal = (bool, id) => {
+    if(bool) {
+      document.getElementById('modal').style.display = 'flex';
+      this.setState({deleteId: id})
+    } else {
+      document.getElementById('modal').style.display = 'none';
+      this.setState({deleteId: null})
+    }
   }
 
 
   render() {
     const styleLoad = this.state.loading ? {position: 'relative', top: '0'} : {};
+    const connexion = this.state.error ? 'offline' : this.state.modify;
+
     const styleTaunt = {textDecorationLine: 'line-through'};
+    const styleClosed = {color: 'grey', fontStyle: 'oblique'};
 
     return (
       <div className="todo" style={styleLoad}>
-        { this.state.todoId
-        ? 
-          <Todo todo={this.state.todoId} />
-        : 
-          <div className="t-lists">
-            <h4 className="title">To Do Lists</h4>
-            <p className="modify">{this.state.loading ? 'loading' : ''}</p>
-            <div className="list-container">
-              { this.state.todos.map(
-                (todo, index) => 
-                <div key={index}>
-                  <div className="t-date" style={!this.state.dates[index] ? {paddingTop: '0'} : {}}>{this.state.dates[index]}</div>
-                  <div className="t-list row">
-                    <div className="col-1 col-sm-1 pl-1" onClick={this.handleTick.bind(null, todo.id)}>
-                      <img src={this.state.tick === todo.id ? tickDown : tick} className="t-tick" alt="tick" />
-                    </div>
-                    <div className="t-libelle col-8 col-sm-8 pl-1" onClick={this.handleTodo.bind(null, todo)}>
-                      <p>{todo.libelle}</p>
-                    </div>
-                    <div className="t-hour">{todo.hour}</div>
-                    <div className="col-1 col-sm-1" onClick={this.handleTrash.bind(null, todo.id)}>
-                      <img className="t-trash" src={trash} alt="trash" />
-                    </div>
+        <div className="t-lists">
+          <h4 className="title">To do lists</h4>
+          <p className="modify">{this.state.loading ? 'loading' : connexion}</p>
+          <div className="list-container">
+            { !this.state.loading ? 
+              <div>
+                { !(this.state.todos).length 
+                  ? 
+                  <div className="t-list d-flex justify-content-center align-item-center pt-5">
+                    Nothing yet...
                   </div>
-                  { this.state.tick === todo.id 
-                    ? todo.list.length ? 
-                      todo.list.map(
-                        (e, index) =>
-                        <label key={index} className="row">
-                          <div className="t-list-name col-1 col-sm-1">
-                            <input className="check" 
-                              type="checkbox" 
-                              checked={e.checked || false} 
-                              value={index} 
-                              onChange={this.handleCheck} 
-                            />
-                          </div>
-                          <div className="col-10 col-sm-10">
-                            <p className="t-list-name" style={e.checked ? styleTaunt : {}}>{e.name}</p>
-                          </div> 
-                        </label>
-                      )
-                      : 
-                      <div className="row">
-                        <div className="col-10">
-                          <span className="t-list-name">Nothing here...</span>
-                        </div> 
+                  : 
+                  this.state.todos.map(
+                    (todo, index) => 
+                    <div key={index}>
+                      <div className="t-date" style={!this.state.dates[index] ? {paddingTop: '0'} : {}}>{this.state.dates[index]}</div>
+                      <div className="t-list row">
+                        <div className="col-1 col-sm-1 pl-1" onClick={this.handleTick.bind(null, todo.id)}>
+                          <img src={this.state.tick === todo.id ? tickDown : tick} className="t-tick" alt="tick" />
+                        </div>
+                        <div className="t-libelle col-8 col-sm-8 pl-1">
+                          <Link to={{pathname: '/todo', app: this.state.app, todo: todo}}>
+                            <p style={ todo.closed ? styleClosed : {}}>{todo.libelle}</p>
+                          </Link>
+                        </div>
+                        <div className="t-hour">{todo.hour}</div>
+                        <div className="col-1 col-sm-1" onClick={this.handleModal.bind(null, true, todo.id)}>
+                          <img className="t-trash" src={trash} alt="trash" />
+                        </div>
                       </div>
-                    : false
-                  }
-                </div>
-              )}
-
-              <div className="footer-list">
-                <div className="alert">{/* message */}</div>
-                <div className="row">
-                  <div className="input-libelle">
-                    <input
-                      className="form-control form-control-sm"
-                      name="product" 
-                      type="text" 
-                      autoComplete="off" 
-                      value={this.state.product} 
-                      onChange={this.handleChange} 
-                      onKeyDown={this.handleKey} 
-                      placeholder="To do ..." 
-                      ref={this.textInput}
-                    />
-                  </div>
-                  <div className="new-libelle">
-                    <input 
-                      className="btn btn-sm btn-secondary"
-                      type="submit" 
-                      name="new" 
-                      value="New" 
-                      onClick={this.handleNewLibelle} 
-                    />
-                  </div>
-                </div>
-
+                      { this.state.tick === todo.id 
+                        ? 
+                        todo.list.length 
+                          ? 
+                          todo.list.map(
+                            (line, index) =>
+                            <label key={index} className="row">
+                              <div className="t-list-name col-1 col-sm-1">
+                                <input className="check" 
+                                  type="checkbox" 
+                                  checked={line.checked || false} 
+                                  onChange={this.handleCheck.bind(null, todo.id, index)} 
+                                />
+                              </div>
+                              <div className="col-10 col-sm-10">
+                                <p className="t-list-name" style={line.checked ? styleTaunt : {}}>{line.name}</p>
+                              </div> 
+                            </label>
+                          )
+                          : 
+                          <div className="row">
+                            <div className="col-10">
+                              <span className="t-list-name">Nothing here...</span>
+                            </div> 
+                          </div>
+                        : false
+                      }
+                    </div>
+                  )
+                }
               </div>
+              : false 
+            }
+            <div className="footer-list">
+              
+              <div className="alert">{/* message */}</div>
+              <div className="row">
+                <div className="input-libelle">
+                  <input
+                    className="form-control form-control-sm"
+                    name="libelle" 
+                    type="text" 
+                    autoComplete="off" 
+                    value={this.state.libelle} 
+                    onChange={this.handleChange} 
+                    onKeyDown={this.handleKey} 
+                    placeholder="To do ..." 
+                    ref={this.textInput}
+                  />
+                </div>
+                <div className="new-libelle">
+                  <input 
+                    className="btn btn-sm btn-secondary"
+                    type="submit" 
+                    name="new" 
+                    value="New" 
+                    onClick={this.createNewTodo} 
+                  />
+                </div>
+              </div>
+
+              <div className="modal" id="modal">
+                <div className="modal-body">
+                  <div className="row amount-valid">
+                    <div className="undo">
+                      <button 
+                        className="btn btn-sm btn-info" 
+                        onClick={this.handleModal.bind(null, false)}>Cancel
+                      </button>
+                    </div>
+                    <div className="pay">
+                      <button 
+                        className="btn btn-sm btn-danger" 
+                        onClick={this.handleTrash}>Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
+            
           </div>
-        }
+        </div>
       </div>
     )
   }

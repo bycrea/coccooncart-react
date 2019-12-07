@@ -13,7 +13,7 @@ class Home extends Component {
           <ul className="h-links">
             <Link to="/cart"><li>Cart</li></Link>
             {/* <Link to="/wallet"><li>Wallet</li></Link> */}
-            {/* <Link to="/todos"><li>To Do</li></Link> */}
+            <Link to="/todos"><li>To Do</li></Link>
           </ul>
         </div>
       </div>  

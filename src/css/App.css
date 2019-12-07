@@ -1,5 +1,6 @@
-* {
+*:not(input) {
     scroll-behavior: smooth;
+    user-select: none;
 }
 
 body {
@@ -116,4 +117,8 @@ input[type=checkbox] {
     font-size: 0.8em;
     color: antiquewhite;
     background-color: rgb(199, 53, 53);
+}
+
+img[class$=trash] {
+    cursor: pointer;
 }
