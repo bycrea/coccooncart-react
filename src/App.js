@@ -82,7 +82,7 @@ class App extends Component {
             error: true,
           });
         } else {
-          //console.log(this.parseJwt(result.token))
+          console.log(this.parseJwt(result.token))
           cookies.set('coccooncookie', result.token, { path: '/' });
           this.setState({
             isLogged: true,
@@ -98,6 +98,10 @@ class App extends Component {
         console.log(error)
       }
     )
+  }
+
+  handleSignUp = () => {
+    console.warn('sing up');
   }
 
   handleLogout = () => {
@@ -148,7 +152,12 @@ class App extends Component {
         {this.state.isLogged 
         ?
           <div className="app container container-fluid" style={height}>
-            <Nav logout={this.handleLogout} username={this.state.username}/>
+            <Nav  
+                  username={this.state.username} 
+                  isLogged={this.state.isLogged} 
+                  logout={this.handleLogout} 
+                  signUp={this.handleSignUp} 
+            />
             <Switch>
               <Home path="/" exact component={Home} />
               <Cart path="/cart" component={Cart} state={this.state} />
@@ -160,7 +169,12 @@ class App extends Component {
           </div>
         :
           <div className="app container container-fluid">
-            <Nav logout={this.handleLogout} username={'Sign In'}/>
+            <Nav  
+                  username={this.state.username} 
+                  isLogged={this.state.isLogged} 
+                  logout={this.handleLogout} 
+                  signUp={this.handleSignUp} 
+            />
             <Login handleLogin={this.handleLogin} error={this.state.error}/>
           </div>
         }

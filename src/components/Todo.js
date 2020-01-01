@@ -191,16 +191,16 @@ class Todo extends Component {
   }
 
   handledone = () => {
-    const [reverse, newList] = [!this.state.closed, this.state.list];
+    const [invert, newList] = [!this.state.closed, this.state.list];
     newList.forEach(e => {
-      e.checked = reverse;
+      e.checked = invert;
     });
 
     this.setState({
       list: newList,
-      closed: reverse
+      closed: invert
     }, () => {
-      if(reverse) {
+      if(invert) {
         this.closeTodo(newList)
       } else {
         this.updateList(newList)

@@ -169,7 +169,7 @@ class Todos extends Component {
       .then(res => res.json())
       .then((result) => {
         //console.log(result)
-        if(result.error === false) {
+        if(result.error !== true) {
           let newTodos = this.state.todos;
           newTodos.map((todo) => {
             if(todo.id === todoId) {
