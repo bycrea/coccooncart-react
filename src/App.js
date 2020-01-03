@@ -5,6 +5,7 @@ import { withCookies, Cookies } from 'react-cookie';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 
 import Login from './components/LoginForm';
+import SignUp from './components/SignUpForm';
 import Nav from './components/Nav';
 import Home from './components/Home';
 import Cart from './components/Cart';
@@ -22,7 +23,9 @@ class App extends Component {
     
     this.state = {
       isLogged: false,
+      isSignUp: true,
       error: false,
+      errorMessage: "",
       username: "",
       token: "",
       urlApi: process.env.REACT_APP_API_URL,
@@ -76,10 +79,11 @@ class App extends Component {
     })
     .then(res => res.json())
       .then((result) => {
-        //console.log(result);
+        console.log(result);
         if(!result.token) {
           this.setState({
             error: true,
+            errorMessage: result.message
           });
         } else {
           console.log(this.parseJwt(result.token))
@@ -94,14 +98,47 @@ class App extends Component {
       (error) => {
         this.setState({
           error: true,
+          errorMessage: "Connection down."
         });
         console.log(error)
       }
     )
   }
 
-  handleSignUp = () => {
+  handleSignUp = (credentials) => {
     console.warn('sing up');
+    this.setState({
+      isSignUp: !this.state.isSignUp
+    });
+
+    if(this.state.isSignUp && Object.keys(credentials).length === 3) {
+      console.log(credentials);
+      // fetch(this.state.urlApi + '/signup/register', {
+      //   method: 'POST',
+      //   headers: new Headers({'content-type': 'application/json'}),
+      //   body: JSON.stringify({email: credentials.email, username: credentials.user, password: credentials.pass})
+      // })
+      // .then(res => res.json())
+      //   .then((result) => {
+      //     console.log(result);
+      //     if(result.error) {
+      //       this.setState({
+      //         error: true,
+      //         errorMessage: result.message
+      //       });
+      //     } else {
+      //       console.log(result);
+      //     }
+      //   },
+      //   (error) => {
+      //     this.setState({
+      //       error: true,
+      //       errorMessage: "Connection down."
+      //     });
+      //     console.log(error)
+      //   }
+      // )
+    }
   }
 
   handleLogout = () => {
@@ -114,6 +151,16 @@ class App extends Component {
       token: ""
     });
   }
+
+  nav = () => { return (
+    <Nav  
+      username={this.state.username} 
+      isLogged={this.state.isLogged} 
+      isSignUp={this.state.isSignUp} 
+      logout={this.handleLogout} 
+      signUp={this.handleSignUp} 
+    />
+  )}
 
   // getAllData() {
   //   fetch(this.state.urlApi + '/api/getuserdata', {
@@ -143,7 +190,6 @@ class App extends Component {
   //   )
   // }
 
-
   render() {
     const height = this.state.isLogged ? {height: '100vh'} : {height: '0'};
     
@@ -152,12 +198,7 @@ class App extends Component {
         {this.state.isLogged 
         ?
           <div className="app container container-fluid" style={height}>
-            <Nav  
-                  username={this.state.username} 
-                  isLogged={this.state.isLogged} 
-                  logout={this.handleLogout} 
-                  signUp={this.handleSignUp} 
-            />
+            {this.nav()}
             <Switch>
               <Home path="/" exact component={Home} />
               <Cart path="/cart" component={Cart} state={this.state} />
@@ -169,13 +210,20 @@ class App extends Component {
           </div>
         :
           <div className="app container container-fluid">
-            <Nav  
-                  username={this.state.username} 
-                  isLogged={this.state.isLogged} 
-                  logout={this.handleLogout} 
-                  signUp={this.handleSignUp} 
-            />
-            <Login handleLogin={this.handleLogin} error={this.state.error}/>
+            {this.nav()}
+            {this.state.isSignUp ?
+              <SignUp 
+                handleSignUp={this.handleSignUp} 
+                error={this.state.error} 
+                errorMessage={this.state.errorMessage} 
+              />
+            : 
+              <Login 
+                handleLogin={this.handleLogin} 
+                error={this.state.error} 
+                errorMessage={this.state.errorMessage} 
+              />
+            }
           </div>
         }
       </Router>

@@ -22,18 +22,16 @@ class LoginForm extends Component {
     this.props.handleLogin(this.state.username, this.state.password);
   }
 
-  render() {
-    const error = this.props.error;
-    
+  render() {    
     return (
       <form onSubmit={this.handleSubmit}>
         <div className="login-page">
           <Welcome />
-          { error ?
+          { this.props.error ?
             <div className="form-group">
-              <span style={{color: 'red'}}>Unknown User...</span>
+              <span style={{color: 'red'}}>{this.props.errorMessage}</span>
             </div>
-          : false
+            : false
           }
           <div className="form-group">
             <label className="log-user">Username
