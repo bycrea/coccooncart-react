@@ -5,7 +5,7 @@
   "homepage": "https://coccoon.bycrea.me/",
   "dependencies": {
     "i": "^0.3.6",
-    "jquery": "^3.4.1",
+    "jquery": "^3.5.0",
     "npm": "^6.13.0",
     "react": "^16.10.1",
     "react-cookie": "^4.0.1",
